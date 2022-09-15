@@ -1,0 +1,11 @@
+---
+import normalizeAstroClassListProps from "~utils/normalizeAstroClassListProps";
+
+interface Props extends astroHTML.JSX.HTMLAttributes {}
+
+const { classList, ...props } = normalizeAstroClassListProps(
+  Astro.props as Props
+);
+---
+
+<h1 {...props} class:list={[classList, "text-3xl font-bold"]}><slot /></h1>

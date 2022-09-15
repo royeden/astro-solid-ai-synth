@@ -1,0 +1,67 @@
+---
+import Link from "~components/Link.astro";
+import Title from "~components/Title.astro";
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Credits and notes">
+  <main class="relative space-y-4">
+    <Title class="text-center">Credits</Title>
+    <p class="text-lg text-center">
+      This site is open source:
+      <Link external href="https://github.com/royeden/astro-solid-ai-synth">
+        View the code!
+      </Link>
+    </p>
+    <div class="space-y-2">
+      <p>And it's made with these awesome open source technologies:</p>
+      <ul class="list-disc list-inside space-y-1 max-w-lg">
+        <li>
+          <Link external href="https://astro.build">Astro</Link>
+          for SSR and Partial Hydration.
+        </li>
+        <li>
+          <Link external href="https://www.solidjs.com/">Solid JS</Link>
+          for building the Interactive UI.
+        </li>
+        <li>
+          <Link external href="https://github.com/otonashixav/solid-flip">
+            Solid Flip
+          </Link>
+          to handle transitions.
+        </li>
+        <li>
+          <Link external href="https://webmidijs.org/">WebMIDI.js</Link>
+          to handle MIDI.
+        </li>
+      </ul>
+    </div>
+    <p>
+      It also uses
+      <Link external href="https://astro.build">
+        MediaPipe's Holistic Model
+      </Link>
+      to track poses.
+    </p>
+    <div class="space-y-2">
+      <p>Expect these features in the future:</p>
+      <ul class="list-disc list-inside space-y-1 max-w-lg">
+        <li>More tracking landmarks for the hands.</li>
+        <li>Thresholding and custom visibility settings for each part.</li>
+        <li>Internationalization (i18n).</li>
+        <li>UX improvements.</li>
+        <li>More control on note ranges.</li>
+        <li>Consideration of Quantization on the app before sending notes.</li>
+        <li>Bugfixing :P</li>
+      </ul>
+    </div>
+    <div class="w-full flex justify-center">
+      <a
+        class="rounded-md py-1.5 px-4 font-bold text-white ring-black/75 transition duration-300 focus:outline-none focus-visible:ring dark:ring-white/75 bg-purple-700 hover:bg-purple-600 focus-visible:bg-purple-600"
+        href="/"
+      >
+        Go to the app
+      </a>
+    </div>
+  </main>
+</Layout>

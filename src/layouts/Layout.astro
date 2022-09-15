@@ -1,0 +1,64 @@
+---
+import Link from "~components/Link.astro";
+import { ToggleTheme } from "~components/solid/ToggleTheme";
+
+export interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+
+const A_DAY_IN_SECONDS = 60 * 60 * 24;
+Astro.response.headers.set(
+  "Cache-Control",
+  `s-maxage=${A_DAY_IN_SECONDS}, stale-while-revalidate`
+);
+---
+
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <meta
+      name="description"
+      content="Use your body as an instrument! Transform your movements into MIDI values with the help of your webcam, AI, and WebMIDI!"
+    />
+    <title>Pose AI Synth — {title}</title>
+    <script
+      is:inline
+      defer
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      is:inline
+      defer
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      is:inline
+      defer
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body
+    class="flex flex-col items-center p-4 transition-colors duration-300 scrollbar scrollbar-thin scrollbar-track-white scrollbar-thumb-purple-600 dark:bg-neutral-900 dark:text-white/90 dark:scrollbar-track-neutral-900"
+  >
+    <div class="relative w-full max-w-screen-xl">
+      <ToggleTheme client:load />
+    </div>
+    <slot />
+    <footer class="mt-4 text-lg flex flex-col items-center justify-center">
+      <p>
+        Made by
+        <Link external href="https://roy-eden.vercel.app">Roy Eden</Link>
+      </p>
+      <slot name="footer" />
+    </footer>
+  </body>
+</html>

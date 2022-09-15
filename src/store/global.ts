@@ -1,0 +1,313 @@
+import type { Camera } from "@mediapipe/camera_utils";
+import type { Holistic, Options } from "@mediapipe/holistic";
+import { createStore } from "solid-js/store";
+import { Input, Output, WebMidi } from "webmidi";
+import { debounce } from "~utils/debounce";
+import { sendMidiMessages, stopMidiMessages } from "~utils/midi";
+import {
+  onResults,
+  PoseLandmark,
+  POSE_LANDMARKS,
+  POSE_LANDMARKS_ORDER,
+} from "~utils/model";
+
+export type TrackingConfig = typeof POSE_LANDMARKS;
+
+interface Instances {
+  camera?: Camera; // TODO remove and implement our own camera implementation, the mediapipe won't allow re building a Camera instance, it stays in memory
+  model?: Holistic;
+}
+
+interface DomRefs {
+  canvas?: HTMLCanvasElement;
+  context?: CanvasRenderingContext2D;
+  video?: HTMLVideoElement;
+}
+
+interface Dimensions {
+  height: number;
+  width: number;
+}
+
+interface MidiDeviceConfig<T> {
+  available: T[];
+  selected: T | undefined;
+}
+
+export interface GlobalStore {
+  camera: {
+    active: boolean;
+    dimensions: Dimensions;
+    loading: boolean;
+  };
+  midi: {
+    active: boolean;
+    input: MidiDeviceConfig<Input>;
+    output: MidiDeviceConfig<Output>;
+    tracking: TrackingConfig;
+  };
+  model: {
+    // colors: {};
+    loading: boolean;
+    options: Options;
+  };
+}
+
+export interface StoredConfig {
+  camera: Dimensions;
+  model: {
+    options: Options;
+  };
+  tracking: TrackingConfig;
+}
+
+export const instances: Instances = {};
+export const nodeReferences: DomRefs = {};
+
+function getInitialTrackingConfig() {
+  return POSE_LANDMARKS_ORDER.reduce((tracking, landmark) => {
+    tracking[landmark as PoseLandmark] = Object.assign(
+      {},
+      POSE_LANDMARKS[landmark as PoseLandmark]
+    );
+    return tracking;
+  }, {} as TrackingConfig);
+}
+
+export const [state, setState] = createStore<GlobalStore>({
+  camera: {
+    active: false,
+    dimensions: { height: 720, width: 1280 },
+    loading: true,
+  },
+  midi: {
+    active: false,
+    input: {
+      available: [],
+      selected: undefined,
+    },
+    output: {
+      available: [],
+      selected: undefined,
+    },
+    tracking: getInitialTrackingConfig(),
+  },
+  model: {
+    loading: true,
+    options: {
+      // enableFaceGeometry: false,
+      selfieMode: false,
+      modelComplexity: 1,
+      smoothLandmarks: true,
+      enableSegmentation: false,
+      smoothSegmentation: true,
+      refineFaceLandmarks: true,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5,
+    },
+  },
+});
+
+const STORED_CONFIG_KEY = "StoredConfig";
+const IS_IN_CLIENT = typeof window !== undefined;
+
+export function getStoredConfig(): StoredConfig {
+  const fallback = {
+    camera: state.camera.dimensions,
+    model: {
+      options: state.model.options,
+    },
+    tracking: state.midi.tracking,
+  };
+
+  if (IS_IN_CLIENT) {
+    const config = localStorage.getItem(STORED_CONFIG_KEY);
+    if (config) {
+      return JSON.parse(config) as StoredConfig;
+    } else {
+      localStorage.setItem(STORED_CONFIG_KEY, JSON.stringify(fallback));
+    }
+  }
+
+  return fallback;
+}
+
+export function setStoredConfig(config: Partial<StoredConfig>) {
+  if (IS_IN_CLIENT) {
+    localStorage.setItem(
+      STORED_CONFIG_KEY,
+      JSON.stringify({
+        ...getStoredConfig(),
+        ...config,
+      })
+    );
+  }
+}
+
+export function setupStoredConfig(config: StoredConfig) {
+  setState({
+    camera: {
+      ...state.camera,
+      dimensions: config.camera,
+    },
+    midi: {
+      ...state.midi,
+      tracking: config.tracking,
+    },
+    model: {
+      ...state.model,
+      ...config.model,
+    },
+  });
+}
+
+export function setupCanvasContext() {
+  nodeReferences.context = nodeReferences.canvas!.getContext("2d")!;
+}
+
+export async function setupCamera() {
+  if (instances.camera) {
+    // await instances.camera.stop();
+    // delete instances.camera;
+    window.location.reload();
+  } else {
+    setState("camera", "active", false);
+    instances.camera = new window.Camera(nodeReferences.video!, {
+      onFrame: async () => {
+        await instances.model?.send({ image: nodeReferences.video! });
+      },
+      width: state.camera.dimensions.width,
+      height: state.camera.dimensions.height,
+    });
+    await instances.camera.start();
+    setState("camera", "active", true);
+  }
+}
+
+export function updateCamera(
+  camera: Partial<Omit<GlobalStore["camera"], "loading">>
+) {
+  if (camera.active !== undefined && state.camera.active !== camera.active) {
+    if (camera.active) {
+      instances.camera?.start();
+    } else {
+      instances.camera?.stop();
+    }
+  }
+
+  if (
+    camera.dimensions !== undefined &&
+    (camera.dimensions.height !== state.camera.dimensions.height ||
+      camera.dimensions.width !== state.camera.dimensions.width)
+  ) {
+    setupCamera();
+  }
+
+  setState("camera", camera);
+  setStoredConfig({ camera: state.camera.dimensions });
+}
+
+export async function setupModel() {
+  instances.model = new window.Holistic({
+    locateFile: (file) => {
+      return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
+    },
+  });
+
+  instances.model.setOptions(state.model.options);
+  instances.model.onResults(onResults);
+  await instances.model.initialize();
+  await setupCamera();
+  setState("model", "loading", false);
+}
+
+function setModelOptions(options: Options) {
+  instances.model!.setOptions(options);
+  instances.model!.reset();
+  setState("model", "loading", false);
+}
+
+const debouncedSetModelOptions = debounce(setModelOptions, 750);
+
+// TODO error check if no instance is found
+export function updateModelOptions(options: Partial<Options>) {
+  setState("model", {
+    loading: state.camera.active,
+    options: { ...state.model.options, ...options },
+  });
+  setStoredConfig({
+    model: {
+      options: state.model.options,
+    },
+  });
+  if (state.camera.active) {
+    debouncedSetModelOptions(state.model.options);
+  } else {
+    setModelOptions(state.model.options);
+  }
+}
+
+// TODO check error if no midi device is found
+export async function setupMidi() {
+  if (WebMidi.enabled) {
+    console.log("WebMidi restarting...");
+    setState("midi", "active", false);
+    await WebMidi.disable();
+  }
+  await WebMidi.enable();
+  console.log("WebMidi enabled!");
+  const { inputs, outputs } = WebMidi;
+  setState("midi", {
+    ...state.midi,
+    active: true,
+    input: {
+      available: inputs,
+      selected: undefined,
+    },
+    output: {
+      available: outputs,
+      selected: outputs?.[0],
+    },
+    tracking: POSE_LANDMARKS_ORDER.reduce((tracking, landmark) => {
+      if (tracking[landmark as PoseLandmark].outputChannel === 0) {
+        tracking[landmark as PoseLandmark].outputChannel = null;
+      }
+      return tracking;
+    }, state.midi.tracking),
+  });
+  if (inputs[0]) updateMidiInput(inputs[0]);
+}
+
+export function updateMidiInput(input: Input) {
+  state.midi.input.selected?.removeListener("noteon", sendMidiMessages);
+  state.midi.input.selected?.removeListener("noteoff", stopMidiMessages);
+  input.addListener("noteon", sendMidiMessages);
+  input.addListener("noteoff", stopMidiMessages);
+  setState("midi", "input", "selected", input);
+}
+
+export function updateMidiTracking(
+  landmark: keyof typeof POSE_LANDMARKS,
+  landmarkConfig: Partial<GlobalStore["midi"]["tracking"][PoseLandmark]>
+) {
+  if (state.midi.output.selected) {
+    const prevOutputChannel = state.midi.tracking[landmark].outputChannel!;
+    if (
+      landmarkConfig.outputChannel !== prevOutputChannel ||
+      landmarkConfig.triggerChannel === null
+    ) {
+      state.midi.output.selected.sendAllNotesOff(
+        prevOutputChannel ? { channels: prevOutputChannel } : undefined
+      );
+    }
+  }
+  setState("midi", "tracking", landmark, {
+    ...state.midi.tracking[landmark],
+    ...landmarkConfig,
+  });
+  setStoredConfig({ tracking: state.midi.tracking });
+}
+
+export function resetMidiTracking() {
+  setState("midi", "tracking", getInitialTrackingConfig());
+}

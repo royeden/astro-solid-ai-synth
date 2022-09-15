@@ -1,0 +1,14 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { App } from "../components/solid/App";
+import Link from "~components/Link.astro";
+import Title from "~components/Title.astro";
+---
+
+<Layout title="App">
+  <main class="w-full">
+    <Title class="text-center mb-4">Pose AI Synth</Title>
+    <App client:idle />
+  </main>
+  <Link slot="footer" href="/credits-and-notes">Credits and notes</Link>
+</Layout>

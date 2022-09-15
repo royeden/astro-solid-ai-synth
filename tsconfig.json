@@ -1,0 +1,18 @@
+{
+  "extends": "astro/tsconfigs/strictest",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "~components/*": ["src/components/*"],
+      "~constants/*": ["src/constants/*"],
+      "~layouts/*": ["src/layouts/*"],
+      "~store/*": ["src/store/*"],
+      "~styles/*": ["src/styles/*"],
+      "~utils/*": ["src/utils/*"]
+    },
+    "target": "ESNext",
+    // Solid specific settings
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+  }
+}
