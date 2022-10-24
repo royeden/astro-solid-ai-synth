@@ -79,7 +79,7 @@ function getInitialTrackingConfig() {
 export const [state, setState] = createStore<GlobalStore>({
   camera: {
     active: false,
-    dimensions: { height: 720, width: 1280 },
+    dimensions: { height: 360, width: 640 },
     loading: true,
   },
   midi: {

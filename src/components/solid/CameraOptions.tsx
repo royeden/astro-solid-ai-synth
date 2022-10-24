@@ -50,7 +50,7 @@ export function CameraOptions() {
           state.camera.dimensions.height,
         ].join("-")}
       >
-        Dimensions:
+        Dimensions (bigger is better for high end devices, as more resolution usually means better parsing by the AI):
       </Select>
       <Button onClick={() => updateCamera({ active: !state.camera.active })}>
         Turn Camera {state.camera.active ? "Off" : "On"}
