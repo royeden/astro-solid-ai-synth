@@ -27,11 +27,11 @@ export function CameraOptions() {
   // });
   return (
     <section
-      class="w-full max-w-lg space-y-2"
+      class="w-full space-y-2"
     >
       <p class="text-lg font-bold">Camera Options</p>
       <Select
-        containerClass="max-w-md flex items-center justify-between"
+        containerClass="flex items-center justify-between"
         name="camera-dimensions"
         onChange={(value) => {
           const [width, height] = value
@@ -50,7 +50,7 @@ export function CameraOptions() {
           state.camera.dimensions.height,
         ].join("-")}
       >
-        Dimensions (bigger is better for high end devices, as more resolution usually means better parsing by the AI):
+        Resolution (smaller is faster / bigger is better)
       </Select>
       <Button onClick={() => updateCamera({ active: !state.camera.active })}>
         Turn Camera {state.camera.active ? "Off" : "On"}

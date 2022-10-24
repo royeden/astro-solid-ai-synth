@@ -52,7 +52,7 @@ export function ModelOptions() {
             <Switch>
               <Match when={item.type === "range"}>
                 <RangeInput
-                  containerClass="flex items-center max-w-md justify-between space-x-4 capitalize"
+                  containerClass="flex items-center justify-between space-x-4 capitalize"
                   max={(item as RangeModelOption).max}
                   min={(item as RangeModelOption).min}
                   name={item.name}
