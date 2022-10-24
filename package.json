@@ -1,6 +1,6 @@
 {
   "name": "astro-solid-ai-synth",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "author": {
     "name": "Roy Eden",
@@ -15,18 +15,18 @@
     "format": "prettier --write src"
   },
   "devDependencies": {
-    "@astrojs/solid-js": "^1.1.0",
-    "@astrojs/tailwind": "^1.0.0",
-    "@astrojs/vercel": "^2.0.0",
+    "@astrojs/solid-js": "^1.2.1",
+    "@astrojs/tailwind": "^2.1.1",
+    "@astrojs/vercel": "^2.3.1",
     "@mediapipe/camera_utils": "^0.3.1640029074",
     "@mediapipe/control_utils": "^0.6.1629159505",
     "@mediapipe/drawing_utils": "^0.3.1620248257",
     "@mediapipe/holistic": "^0.5.1635989137",
-    "astro": "^1.2.4",
+    "astro": "^1.5.2",
     "prettier": "^2.7.1",
-    "prettier-plugin-astro": "^0.5.4",
+    "prettier-plugin-astro": "^0.6.0",
     "prettier-plugin-tailwindcss": "^0.1.13",
-    "solid-js": "^1.5.4"
+    "solid-js": "^1.6.0"
   },
   "dependencies": {
     "@otonashixav/solid-flip": "^0.10.5",
