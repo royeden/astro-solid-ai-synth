@@ -26,7 +26,9 @@ export function CameraOptions() {
   //   }
   // });
   return (
-    <section class="w-full max-w-lg space-y-2">
+    <section
+      class="w-full max-w-lg space-y-2"
+    >
       <p class="text-lg font-bold">Camera Options</p>
       <Select
         containerClass="max-w-md flex items-center justify-between"

@@ -1,4 +1,4 @@
-import type { Results } from "@mediapipe/holistic";
+import type { Results } from "@mediapipe/pose";
 import type { MessageEvent } from "webmidi";
 import { state } from "~store/global";
 import { map, round } from "~utils/math";

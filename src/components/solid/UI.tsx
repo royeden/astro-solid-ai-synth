@@ -199,29 +199,29 @@ export function Select(props: SelectProps) {
   );
 }
 
-export interface ButtonProps {
-  loading?: boolean;
-}
 export interface ButtonProps
   extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
   custom?: boolean;
+  loading?: boolean;
+  icon?: boolean;
 }
 
 export function Button(props: ButtonProps) {
-  const [local, rest] = splitProps(props, ["children", "class", "custom"]);
+  const [local, rest] = splitProps(props, ["children", "class", "custom", "icon"]);
   const resolved = children(() => local.children);
   return (
     <button
       {...rest}
       class={
-        "rounded-md py-1.5 px-4 font-bold text-white ring-black/75 transition duration-300 focus:outline-none focus-visible:ring dark:ring-white/75" +
-        (local.custom
-          ? ""
-          : " bg-purple-700 enabled:hover:bg-purple-600 enabled:focus-visible:bg-purple-600 disabled:bg-neutral-600") +
+        "rounded-md font-bold text-white ring-black/75 transition duration-300 focus:outline-none focus-visible:ring dark:ring-white/75" +
         (local.class ? ` ${local.class}` : "")
       }
       classList={{
         ...(rest.classList ?? {}),
+        "py-1.5 px-4": !local.icon,
+        "p-2": local.icon,
+        "bg-purple-700 enabled:hover:bg-purple-600 enabled:focus-visible:bg-purple-600 disabled:bg-neutral-600":
+          !local.custom,
         "cursor-pointer": !rest.disabled && !rest.loading,
         "cursor-not-allowed": rest.disabled,
         "cursor-wait": rest.loading,

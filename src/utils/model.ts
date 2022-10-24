@@ -1,5 +1,5 @@
-import type { Results } from "@mediapipe/holistic";
-import { nodeReferences } from "~store/global";
+import type { Results } from "@mediapipe/pose";
+import { DOM_NODE_REFERENCES } from "~store/global";
 import { setupMidiMessages } from "./midi";
 
 export const POSE_LANDMARKS_ORDER = [
@@ -40,6 +40,44 @@ export const POSE_LANDMARKS_ORDER = [
 
 export type PoseLandmark = typeof POSE_LANDMARKS_ORDER[number];
 
+export const POSE_LANDMARKS_LABELS: {
+  [Landmark in PoseLandmark]: string
+} = {
+  LEFT_ANKLE: "Left Ankle",
+  LEFT_EAR: "Left Ear",
+  LEFT_ELBOW: "Left Elbow",
+  LEFT_EYE: "Left Eye",
+  LEFT_EYE_INNER: "Left Eye (inner)",
+  LEFT_EYE_OUTER: "Left Eye (outer)",
+  LEFT_FOOT_INDEX: "Left Foot",
+  LEFT_HEEL: "Left Heel",
+  LEFT_HIP: "Left Hip",
+  LEFT_INDEX: "Left Index Finger",
+  LEFT_KNEE: "Left Knee",
+  LEFT_PINKY: "Left Pinky Finger",
+  LEFT_RIGHT: "Left Torso",
+  LEFT_SHOULDER: "Left Shoulder",
+  LEFT_THUMB: "Left Thumb Finger",
+  LEFT_WRIST: "Left Wrist",
+  NOSE: "Nose",
+  RIGHT_ANKLE: "Right Ankle",
+  RIGHT_EAR: "Right Ear",
+  RIGHT_ELBOW: "Right Elbow",
+  RIGHT_EYE: "Right Eye",
+  RIGHT_EYE_INNER: "Right Eye (inner)",
+  RIGHT_EYE_OUTER: "Right Eye (outer)",
+  RIGHT_FOOT_INDEX: "Right Foot",
+  RIGHT_HEEL: "Right Heel",
+  RIGHT_HIP: "Right Hip",
+  RIGHT_INDEX: "Right Index Finger",
+  RIGHT_KNEE: "Right Knee",
+  RIGHT_PINKY: "Right Pinky Finger",
+  RIGHT_LEFT: "Right Torso",
+  RIGHT_SHOULDER: "Right Shoulder",
+  RIGHT_THUMB: "Right Thumb Finger",
+  RIGHT_WRIST: "Right Wrist",
+};
+
 export const POSE_LANDMARKS = POSE_LANDMARKS_ORDER.reduce(
   (landmarks, landmark) => {
     landmarks[landmark] = {
@@ -65,46 +103,46 @@ export const POSE_LANDMARKS = POSE_LANDMARKS_ORDER.reduce(
 );
 
 function drawKeypoints(results: Results) {
-  nodeReferences.context!.save();
-  nodeReferences.context!.clearRect(
+  DOM_NODE_REFERENCES.context!.save();
+  DOM_NODE_REFERENCES.context!.clearRect(
     0,
     0,
-    nodeReferences.canvas!.width,
-    nodeReferences.canvas!.height
+    DOM_NODE_REFERENCES.canvas!.width,
+    DOM_NODE_REFERENCES.canvas!.height
   );
   if (results.segmentationMask) {
-    nodeReferences.context!.drawImage(
+    DOM_NODE_REFERENCES.context!.drawImage(
       results.segmentationMask,
       0,
       0,
-      nodeReferences.canvas!.width,
-      nodeReferences.canvas!.height
+      DOM_NODE_REFERENCES.canvas!.width,
+      DOM_NODE_REFERENCES.canvas!.height
     );
   }
 
   // Only overwrite existing pixels.
-  nodeReferences.context!.globalCompositeOperation = "source-in";
-  nodeReferences.context!.fillStyle = "#0000FF";
-  nodeReferences.context!.fillRect(
+  DOM_NODE_REFERENCES.context!.globalCompositeOperation = "source-in";
+  DOM_NODE_REFERENCES.context!.fillStyle = "#0000FF";
+  DOM_NODE_REFERENCES.context!.fillRect(
     0,
     0,
-    nodeReferences.canvas!.width,
-    nodeReferences.canvas!.height
+    DOM_NODE_REFERENCES.canvas!.width,
+    DOM_NODE_REFERENCES.canvas!.height
   );
 
   // Only overwrite missing pixels.
-  nodeReferences.context!.globalCompositeOperation = "destination-atop";
-  nodeReferences.context!.drawImage(
+  DOM_NODE_REFERENCES.context!.globalCompositeOperation = "destination-atop";
+  DOM_NODE_REFERENCES.context!.drawImage(
     results.image,
     0,
     0,
-    nodeReferences.canvas!.width,
-    nodeReferences.canvas!.height
+    DOM_NODE_REFERENCES.canvas!.width,
+    DOM_NODE_REFERENCES.canvas!.height
   );
 
-  nodeReferences.context!.globalCompositeOperation = "source-over";
+  DOM_NODE_REFERENCES.context!.globalCompositeOperation = "source-over";
   window.drawConnectors(
-    nodeReferences.context!,
+    DOM_NODE_REFERENCES.context!,
     results.poseLandmarks,
     window.POSE_CONNECTIONS,
     {
@@ -112,49 +150,12 @@ function drawKeypoints(results: Results) {
       lineWidth: 1,
     }
   );
-  window.drawLandmarks(nodeReferences.context!, results.poseLandmarks, {
+  window.drawLandmarks(DOM_NODE_REFERENCES.context!, results.poseLandmarks, {
     color: "#10b981",
     lineWidth: 1,
     radius: 1,
   });
-  window.drawConnectors(
-    nodeReferences.context!,
-    results.faceLandmarks,
-    window.FACEMESH_TESSELATION,
-    {
-      color: "#0ea5e910",
-      lineWidth: 1,
-    }
-  );
-  window.drawConnectors(
-    nodeReferences.context!,
-    results.leftHandLandmarks,
-    window.HAND_CONNECTIONS,
-    {
-      color: "#a855f7",
-      lineWidth: 1,
-    }
-  );
-  window.drawLandmarks(nodeReferences.context!, results.leftHandLandmarks, {
-    color: "#eab308",
-    lineWidth: 1,
-    radius: 1,
-  });
-  window.drawConnectors(
-    nodeReferences.context!,
-    results.rightHandLandmarks,
-    window.HAND_CONNECTIONS,
-    {
-      color: "#f43f5e",
-      lineWidth: 1,
-    }
-  );
-  window.drawLandmarks(nodeReferences.context!, results.rightHandLandmarks, {
-    color: "#3b82f6",
-    lineWidth: 1,
-    radius: 1,
-  });
-  nodeReferences.context!.restore();
+  DOM_NODE_REFERENCES.context!.restore();
 }
 
 export function onResults(results: Results) {

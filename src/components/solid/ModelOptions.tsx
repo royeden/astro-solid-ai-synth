@@ -1,4 +1,4 @@
-import type { Options } from "@mediapipe/holistic";
+import type { Options } from "@mediapipe/pose";
 import { For, Match, Switch } from "solid-js";
 import { state, updateModelOptions } from "~store/global";
 import { RangeInput } from "./UI";

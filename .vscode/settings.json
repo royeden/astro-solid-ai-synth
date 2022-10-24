@@ -12,5 +12,6 @@
     "exitActiveClass",
     "enterToClass",
     "exitToClass",
+    "class:list"
   ]
 }

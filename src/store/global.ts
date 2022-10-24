@@ -1,5 +1,5 @@
 import type { Camera } from "@mediapipe/camera_utils";
-import type { Holistic, Options } from "@mediapipe/holistic";
+import type { Pose, Options } from "@mediapipe/pose";
 import { createStore } from "solid-js/store";
 import { Input, Output, WebMidi } from "webmidi";
 import { debounce } from "~utils/debounce";
@@ -10,12 +10,14 @@ import {
   POSE_LANDMARKS,
   POSE_LANDMARKS_ORDER,
 } from "~utils/model";
+import { version } from "package.json";
+import { IS_IN_CLIENT } from "~constants/env";
 
 export type TrackingConfig = typeof POSE_LANDMARKS;
 
 interface Instances {
   camera?: Camera; // TODO remove and implement our own camera implementation, the mediapipe won't allow re building a Camera instance, it stays in memory
-  model?: Holistic;
+  model?: Pose;
 }
 
 interface DomRefs {
@@ -62,7 +64,7 @@ export interface StoredConfig {
 }
 
 export const instances: Instances = {};
-export const nodeReferences: DomRefs = {};
+export const DOM_NODE_REFERENCES: DomRefs = {};
 
 function getInitialTrackingConfig() {
   return POSE_LANDMARKS_ORDER.reduce((tracking, landmark) => {
@@ -101,15 +103,13 @@ export const [state, setState] = createStore<GlobalStore>({
       smoothLandmarks: true,
       enableSegmentation: false,
       smoothSegmentation: true,
-      refineFaceLandmarks: true,
       minDetectionConfidence: 0.5,
       minTrackingConfidence: 0.5,
     },
   },
 });
 
-const STORED_CONFIG_KEY = "StoredConfig";
-const IS_IN_CLIENT = typeof window !== undefined;
+const STORED_CONFIG_KEY = "StoredConfig_" + version;
 
 export function getStoredConfig(): StoredConfig {
   const fallback = {
@@ -162,7 +162,7 @@ export function setupStoredConfig(config: StoredConfig) {
 }
 
 export function setupCanvasContext() {
-  nodeReferences.context = nodeReferences.canvas!.getContext("2d")!;
+  DOM_NODE_REFERENCES.context = DOM_NODE_REFERENCES.canvas!.getContext("2d")!;
 }
 
 export async function setupCamera() {
@@ -172,9 +172,9 @@ export async function setupCamera() {
     window.location.reload();
   } else {
     setState("camera", "active", false);
-    instances.camera = new window.Camera(nodeReferences.video!, {
+    instances.camera = new window.Camera(DOM_NODE_REFERENCES.video!, {
       onFrame: async () => {
-        await instances.model?.send({ image: nodeReferences.video! });
+        await instances.model?.send({ image: DOM_NODE_REFERENCES.video! });
       },
       width: state.camera.dimensions.width,
       height: state.camera.dimensions.height,
@@ -208,9 +208,9 @@ export function updateCamera(
 }
 
 export async function setupModel() {
-  instances.model = new window.Holistic({
+  instances.model = new window.Pose({
     locateFile: (file) => {
-      return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
+      return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
     },
   });
 
