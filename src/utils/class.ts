@@ -1,6 +1,6 @@
 /// <reference types="astro/astro-jsx" />
 
-export default function normalizeAstroClassListProps<
+export function normalizeAstroClassListProps<
   T extends astroHTML.JSX.HTMLAttributes
 >({
   class: className,
@@ -10,4 +10,17 @@ export default function normalizeAstroClassListProps<
   classList: astroHTML.JSX.HTMLAttributes["class:list"];
 } {
   return { classList: [className, classList], ...props };
+}
+
+
+export function normalizeSolidClass(
+  localClass: string,
+  externalClass?: string,
+  prepend = true
+) {
+  return externalClass
+    ? prepend
+      ? externalClass + " " + localClass
+      : localClass + " " + externalClass
+    : localClass;
 }

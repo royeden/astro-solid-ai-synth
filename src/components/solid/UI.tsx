@@ -1,6 +1,6 @@
 import { children, For, splitProps } from "solid-js";
 import type { JSX } from "solid-js/jsx-runtime";
-import normalizeSolidClass from "~utils/normalizeSolidClass";
+import { normalizeSolidClass } from "~utils/normalizeSolidClass";
 
 interface LabelContainerProps {
   containerClass?: JSX.LabelHTMLAttributes<HTMLLabelElement>["class"];
