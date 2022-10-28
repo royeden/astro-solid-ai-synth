@@ -1,5 +1,6 @@
 import { children, For, splitProps } from "solid-js";
 import type { JSX } from "solid-js/jsx-runtime";
+import normalizeSolidClass from "~utils/normalizeSolidClass";
 
 interface LabelContainerProps {
   containerClass?: JSX.LabelHTMLAttributes<HTMLLabelElement>["class"];
@@ -207,15 +208,20 @@ export interface ButtonProps
 }
 
 export function Button(props: ButtonProps) {
-  const [local, rest] = splitProps(props, ["children", "class", "custom", "icon"]);
+  const [local, rest] = splitProps(props, [
+    "children",
+    "class",
+    "custom",
+    "icon",
+  ]);
   const resolved = children(() => local.children);
   return (
     <button
       {...rest}
-      class={
-        "rounded-md font-bold text-white ring-black/75 transition duration-300 focus:outline-none focus-visible:ring dark:ring-white/75" +
-        (local.class ? ` ${local.class}` : "")
-      }
+      class={normalizeSolidClass(
+        "rounded-md font-bold text-white ring-black/75 transition duration-300 focus:outline-none focus-visible:ring dark:ring-white/75",
+        local.class
+      )}
       classList={{
         ...(rest.classList ?? {}),
         "py-1.5 px-4": !local.icon,

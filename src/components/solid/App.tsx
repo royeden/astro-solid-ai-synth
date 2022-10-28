@@ -1,5 +1,6 @@
 import { createSignal, onMount, Show } from "solid-js";
 import Instructions from "~components/solid/Instructions";
+import { IS_IN_CLIENT } from "~constants/env";
 import {
   getStoredConfig,
   DOM_NODE_REFERENCES,
@@ -70,7 +71,7 @@ function CameraView() {
 
 export function App() {
   onMount(() => {
-    if (typeof window !== undefined) {
+    if (IS_IN_CLIENT) {
       setupStoredConfig(getStoredConfig());
       setupCanvasContext();
       setupMidi();
@@ -78,7 +79,6 @@ export function App() {
         if (retries) {
           if (
             window.Pose &&
-            window.Camera &&
             !!window.drawConnectors &&
             !!window.drawLandmarks
           ) {

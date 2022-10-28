@@ -1,4 +1,3 @@
-import type { Camera } from "@mediapipe/camera_utils";
 import type { Pose, Options } from "@mediapipe/pose";
 import { createStore } from "solid-js/store";
 import { Input, Output, WebMidi } from "webmidi";
@@ -12,6 +11,7 @@ import {
 } from "~utils/model";
 import { version } from "package.json";
 import { IS_IN_CLIENT } from "~constants/env";
+import { Camera, Dimensions } from "~utils/camera";
 
 export type TrackingConfig = typeof POSE_LANDMARKS;
 
@@ -26,11 +26,6 @@ interface DomRefs {
   video?: HTMLVideoElement;
 }
 
-interface Dimensions {
-  height: number;
-  width: number;
-}
-
 interface MidiDeviceConfig<T> {
   available: T[];
   selected: T | undefined;
@@ -39,6 +34,7 @@ interface MidiDeviceConfig<T> {
 export interface GlobalStore {
   camera: {
     active: boolean;
+    deviceId: string;
     dimensions: Dimensions;
     loading: boolean;
   };
@@ -56,7 +52,10 @@ export interface GlobalStore {
 }
 
 export interface StoredConfig {
-  camera: Dimensions;
+  camera: {
+    deviceId: string;
+    dimensions: Dimensions;
+  };
   model: {
     options: Options;
   };
@@ -79,7 +78,11 @@ function getInitialTrackingConfig() {
 export const [state, setState] = createStore<GlobalStore>({
   camera: {
     active: false,
-    dimensions: { height: 360, width: 640 },
+    deviceId: "",
+    dimensions: {
+      height: 360,
+      width: 640,
+    },
     loading: true,
   },
   midi: {
@@ -113,12 +116,15 @@ const STORED_CONFIG_KEY = "StoredConfig_" + version;
 
 export function getStoredConfig(): StoredConfig {
   const fallback = {
-    camera: state.camera.dimensions,
+    camera: {
+      deviceId: state.camera.deviceId,
+      dimensions: state.camera.dimensions,
+    },
     model: {
       options: state.model.options,
     },
     tracking: state.midi.tracking,
-  };
+  } as StoredConfig;
 
   if (IS_IN_CLIENT) {
     const config = localStorage.getItem(STORED_CONFIG_KEY);
@@ -148,7 +154,7 @@ export function setupStoredConfig(config: StoredConfig) {
   setState({
     camera: {
       ...state.camera,
-      dimensions: config.camera,
+      ...config.camera,
     },
     midi: {
       ...state.midi,
@@ -167,17 +173,21 @@ export function setupCanvasContext() {
 
 export async function setupCamera() {
   if (instances.camera) {
-    // await instances.camera.stop();
-    // delete instances.camera;
-    window.location.reload();
+    await instances.camera.update({
+      deviceId: state.camera.deviceId,
+      ...state.camera.dimensions,
+    });
   } else {
     setState("camera", "active", false);
-    instances.camera = new window.Camera(DOM_NODE_REFERENCES.video!, {
+    instances.camera = new Camera(DOM_NODE_REFERENCES.video!, {
+      deviceId: state.camera.deviceId,
       onFrame: async () => {
-        await instances.model?.send({ image: DOM_NODE_REFERENCES.video! });
+        if (!DOM_NODE_REFERENCES.video!.paused) {
+          await instances.model?.send({ image: DOM_NODE_REFERENCES.video! });
+        }
       },
-      width: state.camera.dimensions.width,
       height: state.camera.dimensions.height,
+      width: state.camera.dimensions.width,
     });
     await instances.camera.start();
     setState("camera", "active", true);
@@ -196,15 +206,22 @@ export function updateCamera(
   }
 
   if (
-    camera.dimensions !== undefined &&
-    (camera.dimensions.height !== state.camera.dimensions.height ||
-      camera.dimensions.width !== state.camera.dimensions.width)
+    (camera.dimensions !== undefined &&
+      (camera.dimensions.height !== state.camera.dimensions.height ||
+        camera.dimensions.width !== state.camera.dimensions.width)) ||
+    (camera.deviceId !== undefined && camera.deviceId !== state.camera.deviceId)
   ) {
+    console.log("setup", camera, state.camera);
     setupCamera();
   }
 
   setState("camera", camera);
-  setStoredConfig({ camera: state.camera.dimensions });
+  setStoredConfig({
+    camera: {
+      deviceId: state.camera.deviceId,
+      dimensions: state.camera.dimensions,
+    },
+  });
 }
 
 export async function setupModel() {

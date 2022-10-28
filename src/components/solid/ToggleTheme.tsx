@@ -4,12 +4,13 @@ import {
   TransitionGroup,
 } from "@otonashixav/solid-flip";
 import { createEffect, createSignal, onMount, Show } from "solid-js";
+import { IS_IN_CLIENT } from "~constants/env";
 import { SolidMoonIcon, SolidSunIcon } from "./Icons";
 
 export function ToggleTheme() {
   const [darkMode, setDarkMode] = createSignal(false);
   onMount(() => {
-    if (typeof window !== undefined) {
+    if (IS_IN_CLIENT) {
       if (
         localStorage.theme === "dark" ||
         (!("theme" in localStorage) &&
@@ -21,7 +22,7 @@ export function ToggleTheme() {
   });
 
   createEffect(() => {
-    if (typeof window !== undefined) {
+    if (IS_IN_CLIENT) {
       if (darkMode()) {
         document.documentElement.classList.add("dark");
         localStorage.theme = "dark";

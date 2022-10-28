@@ -41,7 +41,7 @@ export const POSE_LANDMARKS_ORDER = [
 export type PoseLandmark = typeof POSE_LANDMARKS_ORDER[number];
 
 export const POSE_LANDMARKS_LABELS: {
-  [Landmark in PoseLandmark]: string
+  [Landmark in PoseLandmark]: string;
 } = {
   LEFT_ANKLE: "Left Ankle",
   LEFT_EAR: "Left Ear",
