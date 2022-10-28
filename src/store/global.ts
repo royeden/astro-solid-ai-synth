@@ -211,7 +211,6 @@ export function updateCamera(
         camera.dimensions.width !== state.camera.dimensions.width)) ||
     (camera.deviceId !== undefined && camera.deviceId !== state.camera.deviceId)
   ) {
-    console.log("setup", camera, state.camera);
     setupCamera();
   }
 
