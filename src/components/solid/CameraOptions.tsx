@@ -31,6 +31,7 @@ export function CameraOptions() {
     <section class="w-full space-y-2">
       <p class="text-lg font-bold">Camera Options</p>
       <Select
+        class="max-w-md"
         containerClass="flex items-center justify-between space-x-4"
         name="camera-device"
         onChange={(deviceId) => updateCamera({ deviceId })}

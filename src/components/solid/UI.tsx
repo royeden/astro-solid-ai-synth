@@ -159,6 +159,7 @@ export interface SelectProps {
 
 export function Select(props: SelectProps) {
   const [local, rest] = splitProps(props, [
+    "class",
     "children",
     "containerClass",
     "containerClassList",
@@ -170,7 +171,10 @@ export function Select(props: SelectProps) {
   const select = children(() => (
     <select
       {...rest}
-      class="rounded-md bg-purple-700 p-2 font-bold text-white ring-black/75 transition duration-300 scrollbar scrollbar-thin scrollbar-thumb-white scrollbar-track-purple-600 hover:bg-purple-600 focus:outline-none focus-visible:bg-purple-600 focus-visible:ring dark:ring-white/75"
+      class={normalizeSolidClass(
+        "rounded-md bg-purple-700 p-2 font-bold text-white ring-black/75 transition duration-300 scrollbar scrollbar-thin scrollbar-thumb-white scrollbar-track-purple-600 hover:bg-purple-600 focus:outline-none focus-visible:bg-purple-600 focus-visible:ring dark:ring-white/75",
+        local.class
+      )}
       classList={{
         ...(rest.classList ?? {}),
         "cursor-pointer": !rest.disabled,
