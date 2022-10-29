@@ -25,9 +25,11 @@ export function ToggleTheme() {
     if (IS_IN_CLIENT) {
       if (darkMode()) {
         document.documentElement.classList.add("dark");
+        document.documentElement.style.colorScheme = "dark";
         localStorage.theme = "dark";
       } else {
         document.documentElement.classList.remove("dark");
+        document.documentElement.style.colorScheme = "";
         localStorage.theme = "light";
       }
     }

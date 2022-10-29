@@ -1,6 +1,6 @@
 import type { Results } from "@mediapipe/pose";
 import { DOM_NODE_REFERENCES } from "~store/global";
-import { MIDI_MAPPERS, setupMidiMessages } from "./midi";
+import { MidiMapper, setupMidiMessages } from "./midi";
 
 export const POSE_LANDMARKS_ORDER = [
   "NOSE",
@@ -83,6 +83,8 @@ export const POSE_LANDMARKS = POSE_LANDMARKS_ORDER.reduce(
     landmarks[landmark] = {
       outputChannel: null,
       outputMapper: null,
+      outputMax: 127,
+      outputMin: 0,
       triggerChannel: null,
     };
     return landmarks;
@@ -90,7 +92,9 @@ export const POSE_LANDMARKS = POSE_LANDMARKS_ORDER.reduce(
   {} as {
     [Landmark in PoseLandmark]: {
       outputChannel: number | null;
-      outputMapper: keyof typeof MIDI_MAPPERS | null;
+      outputMapper: MidiMapper | null;
+      outputMax: number;
+      outputMin: number;
       triggerChannel: number | null;
     };
   }

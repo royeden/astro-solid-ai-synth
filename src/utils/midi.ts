@@ -1,7 +1,7 @@
 import type { Results } from "@mediapipe/pose";
 import type { MessageEvent } from "webmidi";
 import { state } from "~store/global";
-import { map, round } from "~utils/math";
+import { floor, map, round } from "~utils/math";
 import { PoseLandmark, POSE_LANDMARKS_ORDER } from "./model";
 
 export const MIDI_CHANNELS = Array.from({ length: 16 }, (_, i) => i + 1);
@@ -12,32 +12,63 @@ interface Point {
   y: number;
 }
 
-type Mapper = (point: Point, min?: number, max?: number) => number;
+type Mapper = (point: Point, min: number, max: number) => number;
 
 const MAX_TRACKING_RANGE = {
   x: 1,
   y: 1,
 };
-// function quantize() {}
+
+export const NOTE_LABELS = [
+  "C",
+  "C#/Db",
+  "D",
+  "D#/Eb",
+  "E",
+  "F",
+  "F#/Gb",
+  "G",
+  "G#/Ab",
+  "A",
+  "A#/Bb",
+  "B",
+];
+
+// We use a 12 note scale because of MIDI
+export function octave(note: number) {
+  return floor(note / 12);
+}
+// function quantize(value: number) {
+// }
 
 function axisMapper(axis: keyof Point, invert = false): Mapper {
   return function midiMapper(point: Point, min = 0, max = 127) {
     const value = point[axis];
     const maxValue = MAX_TRACKING_RANGE[axis];
     return round(
-      map(invert ? maxValue - value : value, 0, maxValue, min, max, true)
+      map(
+        // X axis is flipped
+        (invert && axis === "y") || (axis === "x" && !invert)
+          ? maxValue - value
+          : value,
+        0,
+        maxValue,
+        min,
+        max,
+        true
+      )
     );
   };
 }
 
-function combinedMapper(
+function linearMapper(
   invert: { x?: boolean; y?: boolean } = { x: false, y: false }
 ): Mapper {
   return function midiMapper(point: Point, min = 0, max = 127) {
     const { x, y } = point;
     const { x: xMax, y: yMax } = MAX_TRACKING_RANGE;
     const { x: xInvert, y: yInvert } = invert;
-    const xValue = xInvert ? xMax - x : x;
+    const xValue = xInvert ? x : xMax - x; // X axis is flipped
     const yValue = yInvert ? yMax - y : y;
     return round(map(xValue + yValue, 0, xMax + yMax, min, max, true));
   };
@@ -62,19 +93,19 @@ export const MIDI_MAPPERS = {
   },
   x_y: {
     label: "XY 0 ↘ 127",
-    mapper: combinedMapper(),
+    mapper: linearMapper(),
   },
   x_inverted_y: {
     label: "XY 0 ↙ 127",
-    mapper: combinedMapper({ x: true }),
+    mapper: linearMapper({ x: true }),
   },
   x_y_inverted: {
     label: "XY 0 ↗ 127",
-    mapper: combinedMapper({ y: true }),
+    mapper: linearMapper({ y: true }),
   },
   x_inverted_y_inverted: {
     label: "XY 0 ↖ 127",
-    mapper: combinedMapper({ x: true, y: true }),
+    mapper: linearMapper({ x: true, y: true }),
   },
   x_y_double: {
     label: "X: min ➡️ max, Y: min ⬇️ max",
@@ -221,10 +252,11 @@ export function setupMidiMessages(results: Results) {
         (landmark.visibility ?? 0) >
           (state.model.options.minTrackingConfidence ?? 0.5)
       ) {
-        const value = MIDI_MAPPERS[landmarkConfig.outputMapper].mapper({
-          x: MAX_TRACKING_RANGE.x - landmark.x, // Accounts for flipping
-          y: landmark.y,
-        });
+        const value = MIDI_MAPPERS[landmarkConfig.outputMapper].mapper(
+          landmark,
+          landmarkConfig.outputMin,
+          landmarkConfig.outputMax
+        );
 
         storedState.results[index] = Array.isArray(value) ? value : [value];
       }

@@ -12,7 +12,6 @@ export function normalizeAstroClassListProps<
   return { classList: [className, classList], ...props };
 }
 
-
 export function normalizeSolidClass(
   localClass: string,
   externalClass?: string,

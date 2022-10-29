@@ -2,15 +2,15 @@ import { children, For, Show, splitProps } from "solid-js";
 import type { JSX } from "solid-js/jsx-runtime";
 import { normalizeSolidClass } from "~utils/class";
 
-interface LabelContainerProps {
-  containerClass?: JSX.LabelHTMLAttributes<HTMLLabelElement>["class"];
-  containerClassList?: JSX.LabelHTMLAttributes<HTMLLabelElement>["classList"];
+interface ContainerProps {
+  containerClass?: JSX.HTMLAttributes<HTMLElement>["class"];
+  containerClassList?: JSX.HTMLAttributes<HTMLElement>["classList"];
 }
 
 interface BaseInputProps {
   name: string;
 }
-interface BaseInputProps extends LabelContainerProps {}
+interface BaseInputProps extends ContainerProps {}
 interface BaseInputProps extends JSX.InputHTMLAttributes<HTMLInputElement> {}
 
 export interface InputProps extends Omit<BaseInputProps, "onInput"> {
@@ -21,21 +21,25 @@ export interface InputProps extends Omit<BaseInputProps, "onInput"> {
 export function Input(props: InputProps) {
   const [local, rest] = splitProps(props, [
     "children",
+    "class",
     "containerClass",
     "containerClassList",
+    "id",
+    "name",
     "onInput",
     "type",
   ]);
+
   const resolved = children(() => local.children);
-  return (
-    <div
-      class={local.containerClass ?? ""}
-      classList={local.containerClassList ?? {}}
-    >
-      <label for={props.id ?? props.name}>{resolved()}</label>
+  const input = children(() => (
+    <>
       <input
         {...rest}
-        id={props.id ?? props.name}
+        class={normalizeSolidClass(
+          "rounded border-2 border-neutral-400/50 p-0.5 ring-black/75 transition duration-300 hover:border-neutral-400 focus:outline-none focus-visible:ring dark:ring-white/75",
+          local.class
+        )}
+        id={local.id ?? local.name}
         onInput={(event) =>
           local.onInput(
             local.type === "number"
@@ -45,6 +49,16 @@ export function Input(props: InputProps) {
         }
         type={local.type}
       />
+    </>
+  ));
+
+  return (
+    <div
+      class={local.containerClass ?? ""}
+      classList={local.containerClassList ?? {}}
+    >
+      <label for={local.id ?? local.name}>{resolved()}</label>
+      {input()}
     </div>
   );
 }
@@ -148,7 +162,7 @@ export type Option = {
   value: string | number;
 };
 
-export interface SelectProps extends LabelContainerProps {}
+export interface SelectProps extends ContainerProps {}
 export interface SelectProps
   extends Omit<JSX.SelectHTMLAttributes<HTMLSelectElement>, "onChange"> {}
 export interface SelectProps {
@@ -186,7 +200,10 @@ export function Select(props: SelectProps) {
       onChange={(event) => local.onChange(event.currentTarget.value)}
     >
       <Show when={local.empty}>
-        <option disabled={local.empty!.disabled ?? false} value={local.empty!.value}>
+        <option
+          disabled={local.empty!.disabled ?? false}
+          value={local.empty!.value}
+        >
           {local.empty!.label}
         </option>
       </Show>
@@ -258,10 +275,10 @@ export function Card(props: CardProps) {
   return (
     <div
       {...rest}
-      class={
-        "rounded-lg border border-neutral-400/50 bg-white shadow transition duration-300 dark:bg-neutral-800 dark:text-white/80 dark:shadow-md dark:shadow-neutral-700/30" +
-        (local.class ? ` ${local.class}` : "")
-      }
+      class={normalizeSolidClass(
+        "rounded-lg border border-neutral-400/50 bg-white shadow transition duration-300 dark:bg-neutral-800 dark:text-white/80 dark:shadow-md dark:shadow-neutral-700/30",
+        local.class
+      )}
     >
       {resolved()}
     </div>

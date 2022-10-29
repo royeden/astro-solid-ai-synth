@@ -3,16 +3,18 @@ import {
   animateExit,
   TransitionGroup,
 } from "@otonashixav/solid-flip";
-import { createSignal, For } from "solid-js";
+import { createEffect, createSignal, For, Show } from "solid-js";
 import { resetMidiTracking, state, updateMidiTracking } from "~store/global";
 import {
   ALL_MIDI_CHANNELS,
   MidiMapper,
   MIDI_CHANNELS,
   MIDI_MAPPERS,
+  NOTE_LABELS,
+  octave,
 } from "~utils/midi";
 import { PoseLandmark, POSE_LANDMARKS_LABELS } from "~utils/model";
-import { Button, Card, Option, Select } from "./UI";
+import { Button, Card, Input, Option, Select } from "./UI";
 
 const TRIGGER_OPTIONS = MIDI_CHANNELS.map(
   (channel) =>
@@ -99,6 +101,77 @@ const FILTERS = {
     value: ORDERED_POSE_LANDMARKS.slice(28),
   },
 } as const;
+
+interface NoteConfigProps {
+  id: string;
+  landmark: PoseLandmark;
+  landmarkConfig: typeof state.midi.tracking[PoseLandmark];
+}
+
+function NoteConfig(props: NoteConfigProps) {
+  const [min, setMin] = createSignal<number>(props.landmarkConfig.outputMin);
+  const [max, setMax] = createSignal<number>(props.landmarkConfig.outputMax);
+
+  createEffect(() => {
+    setMin(props.landmarkConfig.outputMin);
+    setMax(props.landmarkConfig.outputMax);
+  });
+
+  return (
+    <form
+      class="space-y-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        updateMidiTracking(props.landmark, {
+          outputMin: min(),
+          outputMax: max(),
+        });
+      }}
+    >
+      <div class="flex items-center space-x-2">
+        <Input
+          containerClass="space-x-2"
+          name={`output-min-${props.id}`}
+          max={`${props.landmarkConfig.outputMax - 1}`}
+          min={0}
+          onInput={setMin}
+          required
+          value={isNaN(min()) ? "" : min()}
+          type="number"
+        >
+          Min Note:
+        </Input>
+        <Show when={!isNaN(min())}>
+          <p>
+            {NOTE_LABELS[min() % 12]} {octave(min())}
+          </p>
+        </Show>
+      </div>
+      <div class="flex items-center space-x-2">
+        <Input
+          containerClass="space-x-2"
+          name={`output-max-${props.id}`}
+          max={127}
+          min={`${props.landmarkConfig.outputMin + 1}`}
+          onInput={setMax}
+          required
+          value={isNaN(max()) ? "" : max()}
+          type="number"
+        >
+          Max Note:
+        </Input>
+        <Show when={!isNaN(max())}>
+          <p>
+            {NOTE_LABELS[max() % 12]} {octave(max())}
+          </p>
+        </Show>
+      </div>
+      <Button class="self-center" type="submit">
+        Set note values
+      </Button>
+    </form>
+  );
+}
 
 export function TrackingOptions() {
   const [filter, setFilter] = createSignal<keyof typeof FILTERS>("all");
@@ -190,6 +263,7 @@ export function TrackingOptions() {
             <For each={FILTERS[filter()].value}>
               {(landmark) => {
                 const id = landmark.toLowerCase().replace("_", "-");
+                const landmarkConfig = () => state.midi.tracking[landmark];
                 return (
                   <Card class="w-full max-w-md space-y-2 rounded-lg p-2.5">
                     <p class="font-bold">{POSE_LANDMARKS_LABELS[landmark]}</p>
@@ -204,9 +278,7 @@ export function TrackingOptions() {
                             triggerChannel: value ? parseInt(value, 10) : null,
                           })
                         }
-                        value={
-                          state.midi.tracking[landmark].triggerChannel ?? ""
-                        }
+                        value={landmarkConfig().triggerChannel ?? ""}
                       >
                         Trigger channel:
                       </Select>
@@ -220,16 +292,13 @@ export function TrackingOptions() {
                             outputChannel: value ? parseInt(value, 10) : null,
                           })
                         }
-                        value={
-                          state.midi.tracking[landmark].outputChannel ?? ""
-                        }
+                        value={landmarkConfig().outputChannel ?? ""}
                       >
                         Output channel:
                       </Select>
                       <Select
-                        containerClass="space-y-2"
+                        containerClass="space-y-2 space-x-2 lg:space-x-0"
                         empty={{
-                          disabled: true,
                           label: "Please choose",
                           value: "",
                         }}
@@ -248,9 +317,14 @@ export function TrackingOptions() {
                             .outputMapper ?? ""
                         }
                       >
-                        Mapper
+                        Mapper:
                       </Select>
                     </div>
+                    <NoteConfig
+                      id={id}
+                      landmark={landmark}
+                      landmarkConfig={landmarkConfig()}
+                    />
                   </Card>
                 );
               }}

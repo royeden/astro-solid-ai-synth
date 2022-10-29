@@ -326,5 +326,10 @@ export function updateMidiTracking(
 }
 
 export function resetMidiTracking() {
-  setState("midi", "tracking", getInitialTrackingConfig());
+  POSE_LANDMARKS_ORDER.forEach((landmark) =>
+    updateMidiTracking(
+      landmark as PoseLandmark,
+      Object.assign({}, POSE_LANDMARKS[landmark as PoseLandmark])
+    )
+  );
 }
