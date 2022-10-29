@@ -303,7 +303,7 @@ export function updateMidiInput(input: Input) {
 }
 
 export function updateMidiTracking(
-  landmark: keyof typeof POSE_LANDMARKS,
+  landmark: PoseLandmark,
   landmarkConfig: Partial<GlobalStore["midi"]["tracking"][PoseLandmark]>
 ) {
   if (state.midi.output.selected) {
@@ -321,6 +321,7 @@ export function updateMidiTracking(
     ...state.midi.tracking[landmark],
     ...landmarkConfig,
   });
+
   setStoredConfig({ tracking: state.midi.tracking });
 }
 

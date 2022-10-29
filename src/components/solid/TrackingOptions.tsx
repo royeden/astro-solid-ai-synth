@@ -5,34 +5,33 @@ import {
 } from "@otonashixav/solid-flip";
 import { createSignal, For } from "solid-js";
 import { resetMidiTracking, state, updateMidiTracking } from "~store/global";
-import { ALL_MIDI_CHANNELS, MIDI_CHANNELS } from "~utils/midi";
-import { POSE_LANDMARKS_LABELS } from "~utils/model";
-import { Button, Card, Checkable, Option, Select } from "./UI";
+import {
+  ALL_MIDI_CHANNELS,
+  MidiMapper,
+  MIDI_CHANNELS,
+  MIDI_MAPPERS,
+} from "~utils/midi";
+import { PoseLandmark, POSE_LANDMARKS_LABELS } from "~utils/model";
+import { Button, Card, Option, Select } from "./UI";
 
-const TRIGGER_OPTIONS = [
-  { label: "None", value: "" },
-  ...MIDI_CHANNELS.map(
-    (channel) =>
-      ({
-        label: `Channel ${channel}`,
-        value: channel,
-      } as Option)
-  ),
-] as Option[];
+const TRIGGER_OPTIONS = MIDI_CHANNELS.map(
+  (channel) =>
+    ({
+      label: `Channel ${channel}`,
+      value: channel,
+    } as Option)
+) as Option[];
 
-const OUTPUT_OPTIONS = [
-  { label: "Off", value: "" },
-  ...ALL_MIDI_CHANNELS.map(
-    (channel) =>
-      ({
-        label: channel ? `Channel ${channel}` : "Any channel",
-        disabled:
-          !channel &&
-          state.midi.input.selected?.id === state.midi.output.selected?.id,
-        value: channel,
-      } as Option)
-  ),
-] as Option[];
+const OUTPUT_OPTIONS = ALL_MIDI_CHANNELS.map(
+  (channel) =>
+    ({
+      label: channel ? `Channel ${channel}` : "Any channel",
+      disabled:
+        !channel &&
+        state.midi.input.selected?.id === state.midi.output.selected?.id,
+      value: channel,
+    } as Option)
+) as Option[];
 
 const ORDERED_POSE_LANDMARKS = [
   "LEFT_EAR",
@@ -197,12 +196,12 @@ export function TrackingOptions() {
                     <div class="flex w-full flex-col justify-between space-y-2">
                       <Select
                         containerClass="space-x-2"
+                        empty={{ label: "None", value: "" }}
                         name={`trigger-channel-${id}`}
                         options={TRIGGER_OPTIONS}
                         onChange={(value) =>
                           updateMidiTracking(landmark, {
-                            triggerChannel:
-                              value === "" ? null : parseInt(value, 10),
+                            triggerChannel: value ? parseInt(value, 10) : null,
                           })
                         }
                         value={
@@ -214,11 +213,11 @@ export function TrackingOptions() {
                       <Select
                         containerClass="space-x-2"
                         name={`output-channel-${id}`}
+                        empty={{ label: "Off", value: "" }}
                         options={OUTPUT_OPTIONS}
                         onChange={(value) =>
                           updateMidiTracking(landmark, {
-                            outputChannel:
-                              value === "" ? null : parseInt(value, 10),
+                            outputChannel: value ? parseInt(value, 10) : null,
                           })
                         }
                         value={
@@ -227,30 +226,30 @@ export function TrackingOptions() {
                       >
                         Output channel:
                       </Select>
-                    </div>
-                    <div class="flex w-full flex-wrap items-center space-x-2">
-                      <For each={["x", "y"] as const}>
-                        {(axis) => (
-                          <Checkable
-                            checked={
-                              state.midi.tracking[landmark].outputValues[axis]
-                            }
-                            containerClass="flex items-center space-x-2"
-                            name={`channel-${id}-${axis}`}
-                            onChange={(checked) =>
-                              updateMidiTracking(landmark, {
-                                outputValues: {
-                                  ...state.midi.tracking[landmark].outputValues,
-                                  [axis]: checked,
-                                },
-                              })
-                            }
-                            type="checkbox"
-                          >
-                            Send {axis}:
-                          </Checkable>
-                        )}
-                      </For>
+                      <Select
+                        containerClass="space-y-2"
+                        empty={{
+                          disabled: true,
+                          label: "Please choose",
+                          value: "",
+                        }}
+                        name={`output-mapper-${id}`}
+                        onChange={(value) => {
+                          updateMidiTracking(landmark, {
+                            outputMapper: value ? (value as MidiMapper) : null,
+                          });
+                        }}
+                        options={Object.keys(MIDI_MAPPERS).map((mapper) => ({
+                          label: MIDI_MAPPERS[mapper as MidiMapper].label,
+                          value: mapper,
+                        }))}
+                        value={
+                          state.midi.tracking[landmark as PoseLandmark]
+                            .outputMapper ?? ""
+                        }
+                      >
+                        Mapper
+                      </Select>
                     </div>
                   </Card>
                 );

@@ -23,6 +23,22 @@ export function map(
     : result;
 }
 
+/**
+ * Fast round a number by converting it to int performing a bit shift
+ * @param value 
+ * @returns rounded value
+ */
 export function round(value: number) {
   return (value + 0.5) << 0;
+}
+
+/**
+ * Fast floor a number by converting it to int with double bit negation
+ * Remember: Don't use negative numbers with this one...
+ * https://coderwall.com/p/ucis8w/javascript-fast-floor
+ * @param value 
+ * @returns floored value
+ */
+export function floor(value: number) {
+  return ~~value;
 }

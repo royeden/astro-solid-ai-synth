@@ -1,6 +1,6 @@
-import { children, For, splitProps } from "solid-js";
+import { children, For, Show, splitProps } from "solid-js";
 import type { JSX } from "solid-js/jsx-runtime";
-import { normalizeSolidClass } from "~utils/normalizeSolidClass";
+import { normalizeSolidClass } from "~utils/class";
 
 interface LabelContainerProps {
   containerClass?: JSX.LabelHTMLAttributes<HTMLLabelElement>["class"];
@@ -152,6 +152,7 @@ export interface SelectProps extends LabelContainerProps {}
 export interface SelectProps
   extends Omit<JSX.SelectHTMLAttributes<HTMLSelectElement>, "onChange"> {}
 export interface SelectProps {
+  empty?: Option;
   name: string;
   options: Option[];
   onChange: (value: string) => void;
@@ -163,6 +164,7 @@ export function Select(props: SelectProps) {
     "children",
     "containerClass",
     "containerClassList",
+    "empty",
     "onChange",
     "options",
   ]);
@@ -183,6 +185,11 @@ export function Select(props: SelectProps) {
       id={props.id ?? props.name}
       onChange={(event) => local.onChange(event.currentTarget.value)}
     >
+      <Show when={local.empty}>
+        <option disabled={local.empty!.disabled ?? false} value={local.empty!.value}>
+          {local.empty!.label}
+        </option>
+      </Show>
       <For each={local.options}>
         {(option) => (
           <option disabled={option.disabled ?? false} value={option.value}>

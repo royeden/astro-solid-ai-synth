@@ -7,13 +7,110 @@ import { PoseLandmark, POSE_LANDMARKS_ORDER } from "./model";
 export const MIDI_CHANNELS = Array.from({ length: 16 }, (_, i) => i + 1);
 export const ALL_MIDI_CHANNELS = [0, ...MIDI_CHANNELS];
 
-export function toMidiValue(value: number, min: number, max: number) {
-  return round(map(value, min, max, 0, 127, true));
+interface Point {
+  x: number;
+  y: number;
 }
 
-export function toMidiPitchBend(value: number, min: number, max: number) {
-  return map(value, min, max, -1, 1, true);
+type Mapper = (point: Point, min?: number, max?: number) => number;
+
+const MAX_TRACKING_RANGE = {
+  x: 1,
+  y: 1,
+};
+// function quantize() {}
+
+function axisMapper(axis: keyof Point, invert = false): Mapper {
+  return function midiMapper(point: Point, min = 0, max = 127) {
+    const value = point[axis];
+    const maxValue = MAX_TRACKING_RANGE[axis];
+    return round(
+      map(invert ? maxValue - value : value, 0, maxValue, min, max, true)
+    );
+  };
 }
+
+function combinedMapper(
+  invert: { x?: boolean; y?: boolean } = { x: false, y: false }
+): Mapper {
+  return function midiMapper(point: Point, min = 0, max = 127) {
+    const { x, y } = point;
+    const { x: xMax, y: yMax } = MAX_TRACKING_RANGE;
+    const { x: xInvert, y: yInvert } = invert;
+    const xValue = xInvert ? xMax - x : x;
+    const yValue = yInvert ? yMax - y : y;
+    return round(map(xValue + yValue, 0, xMax + yMax, min, max, true));
+  };
+}
+
+export const MIDI_MAPPERS = {
+  x: {
+    label: "X: min ➡️ max",
+    mapper: axisMapper("x"),
+  },
+  x_inverted: {
+    label: "X: min ⬅️ max",
+    mapper: axisMapper("x", true),
+  },
+  y: {
+    label: "Y: min ⬇️ max",
+    mapper: axisMapper("y"),
+  },
+  y_inverted: {
+    label: "Y: min ⬆️ max",
+    mapper: axisMapper("y", true),
+  },
+  x_y: {
+    label: "XY 0 ↘ 127",
+    mapper: combinedMapper(),
+  },
+  x_inverted_y: {
+    label: "XY 0 ↙ 127",
+    mapper: combinedMapper({ x: true }),
+  },
+  x_y_inverted: {
+    label: "XY 0 ↗ 127",
+    mapper: combinedMapper({ y: true }),
+  },
+  x_inverted_y_inverted: {
+    label: "XY 0 ↖ 127",
+    mapper: combinedMapper({ x: true, y: true }),
+  },
+  x_y_double: {
+    label: "X: min ➡️ max, Y: min ⬇️ max",
+    mapper: (...args: Parameters<Mapper>) =>
+      [MIDI_MAPPERS.x.mapper(...args), MIDI_MAPPERS.y.mapper(...args)] as [
+        number,
+        number
+      ],
+  },
+  x_inverted_y_double: {
+    label: "X: min ⬅️ max, Y: min ⬇️ max",
+    mapper: (...args: Parameters<Mapper>) =>
+      [
+        MIDI_MAPPERS.x_inverted.mapper(...args),
+        MIDI_MAPPERS.y.mapper(...args),
+      ] as [number, number],
+  },
+  x_y_inverted_double: {
+    label: "X: min ➡️ max, Y: min ⬆️ max",
+    mapper: (...args: Parameters<Mapper>) =>
+      [
+        MIDI_MAPPERS.x.mapper(...args),
+        MIDI_MAPPERS.y_inverted.mapper(...args),
+      ] as [number, number],
+  },
+  x_inverted_y_inverted_double: {
+    label: "X: min ⬅️ max, Y: min ⬆️ max",
+    mapper: (...args: Parameters<Mapper>) =>
+      [
+        MIDI_MAPPERS.x_inverted.mapper(...args),
+        MIDI_MAPPERS.y_inverted.mapper(...args),
+      ] as [number, number],
+  },
+} as const;
+
+export type MidiMapper = keyof typeof MIDI_MAPPERS;
 
 export interface StoredState {
   notes: Array<undefined | number[]>;
@@ -111,6 +208,7 @@ export function stopMidiMessages(event: MessageEvent) {
   }
 }
 
+// TODO consider creating the values before sending them instead of frame by frame
 export function setupMidiMessages(results: Results) {
   if (results.poseLandmarks?.length) {
     results.poseLandmarks.forEach((landmark, index) => {
@@ -119,17 +217,16 @@ export function setupMidiMessages(results: Results) {
       if (
         landmarkConfig.triggerChannel !== null &&
         landmarkConfig.outputChannel !== null &&
-        (landmark.visibility ?? 0) > 0.5
+        landmarkConfig.outputMapper &&
+        (landmark.visibility ?? 0) >
+          (state.model.options.minTrackingConfidence ?? 0.5)
       ) {
-        storedState.results[index] = (["x", "y"] as const)
-          .map((axis) =>
-            landmark[axis] !== undefined && landmarkConfig.outputValues[axis]
-              ? toMidiValue(landmark[axis], 0, 1)
-              : undefined
-          )
-          .filter(
-            (value) => value !== undefined
-          ) as StoredState["results"][number];
+        const value = MIDI_MAPPERS[landmarkConfig.outputMapper].mapper({
+          x: MAX_TRACKING_RANGE.x - landmark.x, // Accounts for flipping
+          y: landmark.y,
+        });
+
+        storedState.results[index] = Array.isArray(value) ? value : [value];
       }
     });
   }
