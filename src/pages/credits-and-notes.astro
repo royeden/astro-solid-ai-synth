@@ -13,6 +13,16 @@ import Layout from "../layouts/Layout.astro";
         View the code!
       </Link>
     </p>
+    <p class="text-lg text-center">
+      It was inspired by
+      <Link
+        external
+        href="https://roy-eden.vercel.app/projects/2020/02/27/motion-synth"
+      >
+        a previous project of mine
+      </Link>
+      .
+    </p>
     <div class="space-y-2">
       <p>And it's made with these awesome open source technologies:</p>
       <ul class="list-disc list-inside space-y-1 max-w-lg">
@@ -44,16 +54,19 @@ import Layout from "../layouts/Layout.astro";
       >
         MediaPipe's Pose Model
       </Link>
-      to track poses.
+      to track poses and their drawing utils (it also used their camera utils but
+      I had to reimplement that because their implementation led to bugs and it didn't
+      allow for device choice).
     </p>
     <div class="space-y-2">
       <p>Expect these features in the future:</p>
       <ul class="list-disc list-inside space-y-1 max-w-lg">
-        <li>More tracking landmarks for the hands.</li>
         <li>Thresholding and custom visibility settings for each part.</li>
         <li>Internationalization (i18n).</li>
         <li>UX improvements.</li>
-        <li>More control on note ranges.</li>
+        <li>
+          <strike> More control on note ranges.</strike>
+        </li>
         <li>Consideration of Quantization on the app before sending notes.</li>
         <li>Bugfixing :P</li>
       </ul>
