@@ -82,10 +82,6 @@ export const POSE_LANDMARKS = POSE_LANDMARKS_ORDER.reduce(
   (landmarks, landmark) => {
     landmarks[landmark] = {
       outputChannel: null,
-      outputValues: {
-        x: true,
-        y: true,
-      },
       outputMapper: null,
       triggerChannel: null,
     };
@@ -94,10 +90,6 @@ export const POSE_LANDMARKS = POSE_LANDMARKS_ORDER.reduce(
   {} as {
     [Landmark in PoseLandmark]: {
       outputChannel: number | null;
-      outputValues: {
-        x: boolean;
-        y: boolean;
-      };
       outputMapper: keyof typeof MIDI_MAPPERS | null;
       triggerChannel: number | null;
     };
