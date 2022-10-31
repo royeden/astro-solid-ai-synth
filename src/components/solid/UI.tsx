@@ -181,7 +181,7 @@ export function Select(props: SelectProps) {
     "empty",
     "onChange",
     "options",
-    "value"
+    "value",
   ]);
   const resolved = children(() => local.children);
   // FIXME Had to resort to this hack in the meantime because SSR in Astro is breaking something in Solid

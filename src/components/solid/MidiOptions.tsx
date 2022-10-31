@@ -60,7 +60,12 @@ export function MidiOptions() {
           </Select>
         )}
       </For>
-      <Button custom class="bg-red-700 enabled:hover:bg-red-600 enabled:focus-visible:bg-red-600" loading={!state.midi.active} onClick={() => setupMidi()}>
+      <Button
+        custom
+        class="bg-red-700 enabled:hover:bg-red-600 enabled:focus-visible:bg-red-600"
+        loading={!state.midi.active}
+        onClick={() => setupMidi()}
+      >
         {state.midi.active ? "Reset MIDI devices" : "Resetting MIDI devices..."}
       </Button>
     </section>

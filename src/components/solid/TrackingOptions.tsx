@@ -4,7 +4,12 @@ import {
   TransitionGroup,
 } from "@otonashixav/solid-flip";
 import { createEffect, createSignal, For, Show } from "solid-js";
-import { resetMidiTracking, state, TrackingConfig, updateMidiTracking } from "~store/global";
+import {
+  resetMidiTracking,
+  state,
+  TrackingConfig,
+  updateMidiTracking,
+} from "~store/global";
 import {
   ALL_MIDI_CHANNELS,
   MidiMapper,
