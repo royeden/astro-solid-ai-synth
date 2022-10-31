@@ -181,6 +181,7 @@ export function Select(props: SelectProps) {
     "empty",
     "onChange",
     "options",
+    "value"
   ]);
   const resolved = children(() => local.children);
   // FIXME Had to resort to this hack in the meantime because SSR in Astro is breaking something in Solid
@@ -198,6 +199,7 @@ export function Select(props: SelectProps) {
       }}
       id={props.id ?? props.name}
       onChange={(event) => local.onChange(event.currentTarget.value)}
+      value={`${local.value ?? ""}`}
     >
       <Show when={local.empty}>
         <option
@@ -216,6 +218,7 @@ export function Select(props: SelectProps) {
       </For>
     </select>
   ));
+
   return (
     <label
       class={local.containerClass ?? ""}
