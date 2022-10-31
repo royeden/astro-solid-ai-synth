@@ -4,7 +4,7 @@ import {
   TransitionGroup,
 } from "@otonashixav/solid-flip";
 import { createEffect, createSignal, For, Show } from "solid-js";
-import { resetMidiTracking, state, updateMidiTracking } from "~store/global";
+import { resetMidiTracking, state, TrackingConfig, updateMidiTracking } from "~store/global";
 import {
   ALL_MIDI_CHANNELS,
   MidiMapper,
@@ -71,41 +71,10 @@ const ORDERED_POSE_LANDMARKS = [
   "RIGHT_HIP",
 ] as const;
 
-const FILTERS = {
-  all: {
-    label: "All",
-    value: ORDERED_POSE_LANDMARKS.slice(),
-  },
-  head: {
-    label: "Head",
-    value: ORDERED_POSE_LANDMARKS.slice(0, 9),
-  },
-  torso: {
-    label: "Torso",
-    value: ORDERED_POSE_LANDMARKS.slice(9, 11),
-  },
-  "left-arm": {
-    label: "Left Arm",
-    value: ORDERED_POSE_LANDMARKS.slice(11, 17),
-  },
-  "right-arm": {
-    label: "Right Arm",
-    value: ORDERED_POSE_LANDMARKS.slice(17, 23),
-  },
-  "left-leg": {
-    label: "Left Leg",
-    value: ORDERED_POSE_LANDMARKS.slice(23, 28),
-  },
-  "right-leg": {
-    label: "Right Leg",
-    value: ORDERED_POSE_LANDMARKS.slice(28),
-  },
-} as const;
-
 interface NoteConfigProps {
   id: string;
   landmark: PoseLandmark;
-  landmarkConfig: typeof state.midi.tracking[PoseLandmark];
+  landmarkConfig: TrackingConfig[PoseLandmark];
 }
 
 function NoteConfig(props: NoteConfigProps) {
@@ -173,8 +142,41 @@ function NoteConfig(props: NoteConfigProps) {
   );
 }
 
+const FILTERS = {
+  all: {
+    label: "All",
+    value: ORDERED_POSE_LANDMARKS.slice(),
+  },
+  head: {
+    label: "Head",
+    value: ORDERED_POSE_LANDMARKS.slice(0, 9),
+  },
+  torso: {
+    label: "Torso",
+    value: ORDERED_POSE_LANDMARKS.slice(9, 11),
+  },
+  "left-arm": {
+    label: "Left Arm",
+    value: ORDERED_POSE_LANDMARKS.slice(11, 17),
+  },
+  "right-arm": {
+    label: "Right Arm",
+    value: ORDERED_POSE_LANDMARKS.slice(17, 23),
+  },
+  "left-leg": {
+    label: "Left Leg",
+    value: ORDERED_POSE_LANDMARKS.slice(23, 28),
+  },
+  "right-leg": {
+    label: "Right Leg",
+    value: ORDERED_POSE_LANDMARKS.slice(28),
+  },
+} as const;
+
+type Filter = keyof typeof FILTERS;
+
 export function TrackingOptions() {
-  const [filter, setFilter] = createSignal<keyof typeof FILTERS>("all");
+  const [filter, setFilter] = createSignal<Filter>("all");
 
   return (
     <section class="flex w-full flex-col items-center space-y-4">
@@ -200,9 +202,9 @@ export function TrackingOptions() {
         <Select
           containerClass="flex w-full items-center justify-between"
           name="landmarks-filter"
-          onChange={(value) => setFilter(value as keyof typeof FILTERS)}
+          onChange={(value) => setFilter(value as Filter)}
           options={Object.keys(FILTERS).map((value) => ({
-            label: FILTERS[value as keyof typeof FILTERS].label,
+            label: FILTERS[value as Filter].label,
             value,
           }))}
           value={filter()}
