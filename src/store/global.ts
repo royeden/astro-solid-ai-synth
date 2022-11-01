@@ -225,7 +225,7 @@ export function updateCamera(
 export async function setupModel() {
   instances.model = new Pose({
     locateFile: (file) => {
-      return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+      return `/scripts/${file}`;
     },
   });
 
