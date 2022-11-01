@@ -19,7 +19,7 @@ const FILES_TO_COPY = [
   "pose/pose_web.binarypb",
 ];
 
-if (isCi) {
+if (isCi || true) {
   async function fetchFiles() {
     if (!fs.existsSync("public/scripts")) {
       fs.mkdirSync("public/scripts");
@@ -31,12 +31,13 @@ if (isCi) {
           console.log(colors.yellow(`Fetching: ${file}...`));
           const response = (
             await axios.get(`https://cdn.jsdelivr.net/npm/@mediapipe/${file}`, {
+              responseType: "arraybuffer",
               headers: {
-                "Content-Encoding": "gzip",
+                "Content-Type": "application/gzip",
               },
             })
           ).data;
-          await fs.promises.writeFile(target, response);
+          await fs.promises.writeFile(target, Buffer.from(response));
           console.log(colors.green(`Fetched to: ${target}!\n`));
         } catch (error) {
           console.error(
