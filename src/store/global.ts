@@ -1,4 +1,4 @@
-import { Pose, Options } from "@mediapipe/pose";
+import type { Pose, Options } from "@mediapipe/pose";
 import { createStore } from "solid-js/store";
 import { Input, Output, WebMidi } from "webmidi";
 import { debounce } from "~utils/debounce";
@@ -223,7 +223,7 @@ export function updateCamera(
 }
 
 export async function setupModel() {
-  instances.model = new Pose({
+  instances.model = new window.Pose({
     locateFile: (file) => {
       return `/scripts/${file}`;
     },

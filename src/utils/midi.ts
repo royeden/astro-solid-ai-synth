@@ -38,8 +38,6 @@ export const NOTE_LABELS = [
 export function octave(note: number) {
   return floor(note / 12);
 }
-// function quantize(value: number) {
-// }
 
 function axisMapper(axis: keyof Point, invert = false): Mapper {
   return function midiMapper(point: Point, min = 0, max = 127) {
@@ -155,9 +153,6 @@ const storedState: StoredState = {
   triggers: MIDI_CHANNELS.map(() => false),
 };
 
-// TODO move this to state?
-const MAX_DURATION = 10000;
-
 // TODO consider not using sets so we already have arrays
 function getChannelNotesByTrigger(trigger: number) {
   return POSE_LANDMARKS_ORDER.reduce((notesByChannel, landmark, index) => {
@@ -193,9 +188,7 @@ export function sendMidiMessages(event: MessageEvent) {
 
       state.midi.output.selected!.playNote(
         notes,
-        channel
-          ? { channels: channel, duration: MAX_DURATION }
-          : { duration: MAX_DURATION }
+        channel ? { channels: channel } : {}
       );
     });
 
@@ -239,6 +232,22 @@ export function stopMidiMessages(event: MessageEvent) {
   }
 }
 
+// function quantize(inputNote: number, scale: number[], roundUp = false) {
+//   const noteInScale = inputNote % 12;
+
+//   return scale.includes(noteInScale)
+//     ? inputNote
+//     : octave(inputNote) * 12 +
+//         scale.reduce(
+//           (pick, note) =>
+//             Math.abs(noteInScale - note) <
+//             Math.abs(noteInScale - pick) + (roundUp ? 1 : 0)
+//               ? note
+//               : pick,
+//           12
+//         );
+// }
+
 // TODO consider creating the values before sending them instead of frame by frame
 export function setupMidiMessages(results: Results) {
   if (results.poseLandmarks?.length) {
@@ -258,7 +267,9 @@ export function setupMidiMessages(results: Results) {
           landmarkConfig.outputMax
         );
 
-        storedState.results[index] = Array.isArray(value) ? value : [value];
+        storedState.results[index] = (
+          Array.isArray(value) ? value : [value]
+        ) as StoredState["results"][number];
       }
     });
   }

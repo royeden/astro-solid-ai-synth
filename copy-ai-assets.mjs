@@ -1,6 +1,7 @@
 import fg from "fast-glob";
 import fs from "fs/promises";
 import colors from "@colors/colors";
+import path from "path";
 
 console.log(
   colors.blue(`Copying AI asset files to public/scripts
@@ -9,14 +10,16 @@ https://github.com/google/mediapipe/issues/1812
 `)
 );
 
-const basePath = "/node_modules/@mediapipe/pose";
+const DRAWING_UTILS_ASSETS_PATH = "node_modules/@mediapipe/drawing_utils";
+const AI_ASSETS_PATH = "node_modules/@mediapipe/pose";
 
 const entries = await fg([
-  `${basePath}/*.js`,
-  `${basePath}/*.tflite`,
-  `${basePath}/*.wasm`,
-  `${basePath}/*.binarypb`,
-  `${basePath}/*.data`,
+  `${DRAWING_UTILS_ASSETS_PATH}/*.js`,
+  `${AI_ASSETS_PATH}/*.js`,
+  `${AI_ASSETS_PATH}/*.tflite`,
+  `${AI_ASSETS_PATH}/*.wasm`,
+  `${AI_ASSETS_PATH}/*.binarypb`,
+  `${AI_ASSETS_PATH}/*.data`,
 ]);
 
 entries.forEach((entry) => {
@@ -26,4 +29,4 @@ entries.forEach((entry) => {
   console.log(colors.green(`Copied to: ${target}!\n`));
 });
 
-console.log(colors.green(colors.bold("Copied all assets into public/scripts")));
+console.log(colors.green(colors.bold("Copied all assets into public/scripts!")));

@@ -20,13 +20,15 @@ const { title } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
-    <!-- <link rel="icon" type="image/svg+xml" href="/favicon.svg" /> -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <meta
       name="description"
       content="Use your body as an instrument! Transform your movements into MIDI values with the help of your webcam, AI, and WebMIDI!"
     />
     <title>Pose AI Synth — {title}</title>
+    <script is:inline defer src="/scripts/drawing_utils.js" />
+    <script is:inline defer src="/scripts/pose.js" />
   </head>
   <body
     class="flex flex-col items-center p-4 transition-colors duration-300 scrollbar scrollbar-thin scrollbar-track-white scrollbar-thumb-purple-600 dark:bg-neutral-900 dark:text-white/90 dark:scrollbar-track-neutral-900"
