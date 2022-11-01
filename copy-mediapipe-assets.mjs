@@ -19,7 +19,13 @@ const FILES_TO_COPY = [
   "pose/pose_web.binarypb",
 ];
 
-if (isCi || true) {
+console.log(
+  colors.blue(`Copying AI asset files to public/scripts
+View the following issue to know why this is a relevant step:
+https://github.com/google/mediapipe/issues/1812`)
+);
+
+if (isCi) {
   async function fetchFiles() {
     if (!fs.existsSync("public/scripts")) {
       fs.mkdirSync("public/scripts");
@@ -52,12 +58,6 @@ if (isCi || true) {
   }
   fetchFiles();
 } else {
-  console.log(
-    colors.blue(`Copying AI asset files to public/scripts
-View the following issue to know why this is a relevant step:
-https://github.com/google/mediapipe/issues/1812`)
-  );
-
   FILES_TO_COPY.forEach((file) => {
     const src = `node_modules/@mediapipe/${file}`;
     const target = `public/scripts/${file.split("/").at(-1)}`;
