@@ -75,24 +75,7 @@ export function App() {
       setupStoredConfig(getStoredConfig());
       setupCanvasContext();
       setupMidi();
-      function setupModelIfAvailable(retries = 10) {
-        if (retries) {
-          if (
-            window.Pose &&
-            !!window.drawConnectors &&
-            !!window.drawLandmarks
-          ) {
-            setupModel();
-          } else {
-            setTimeout(() => setupModelIfAvailable(retries - 1), 1000);
-          }
-        } else {
-          throw new Error(
-            "Couldn't load the model, please check your internet connection!"
-          );
-        }
-      }
-      setupModelIfAvailable();
+      setupModel();
     }
   });
 

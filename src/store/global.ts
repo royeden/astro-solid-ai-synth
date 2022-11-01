@@ -1,4 +1,4 @@
-import type { Pose, Options } from "@mediapipe/pose";
+import { Pose, Options } from "@mediapipe/pose";
 import { createStore } from "solid-js/store";
 import { Input, Output, WebMidi } from "webmidi";
 import { debounce } from "~utils/debounce";
@@ -31,6 +31,8 @@ interface MidiDeviceConfig<T> {
   selected: T | undefined;
 }
 
+// TODO repurpose this into a cleaner API
+// Consider moving the Tracking into the model
 export interface GlobalStore {
   camera: {
     active: boolean;
@@ -42,7 +44,7 @@ export interface GlobalStore {
     active: boolean;
     input: MidiDeviceConfig<Input>;
     output: MidiDeviceConfig<Output>;
-    tracking: TrackingConfig;
+    tracking: TrackingConfig; // TODO Rethink tracking, maybe add an array of configs instead of a single one to allow for multiple expressions of a single body part
   };
   model: {
     // colors: {};
@@ -51,6 +53,7 @@ export interface GlobalStore {
   };
 }
 
+// TODO move this to another file and make a cleaner API with that
 export interface StoredConfig {
   camera: {
     deviceId: string;
@@ -64,16 +67,6 @@ export interface StoredConfig {
 
 export const instances: Instances = {};
 export const DOM_NODE_REFERENCES: DomRefs = {};
-
-function getInitialTrackingConfig() {
-  return POSE_LANDMARKS_ORDER.reduce((tracking, landmark) => {
-    tracking[landmark as PoseLandmark] = Object.assign(
-      {},
-      POSE_LANDMARKS[landmark as PoseLandmark]
-    );
-    return tracking;
-  }, {} as TrackingConfig);
-}
 
 export const [state, setState] = createStore<GlobalStore>({
   camera: {
@@ -95,7 +88,13 @@ export const [state, setState] = createStore<GlobalStore>({
       available: [],
       selected: undefined,
     },
-    tracking: getInitialTrackingConfig(),
+    tracking: POSE_LANDMARKS_ORDER.reduce((tracking, landmark) => {
+      tracking[landmark as PoseLandmark] = Object.assign(
+        {},
+        POSE_LANDMARKS[landmark as PoseLandmark]
+      );
+      return tracking;
+    }, {} as TrackingConfig),
   },
   model: {
     loading: true,
@@ -190,8 +189,8 @@ export async function setupCamera() {
       width: state.camera.dimensions.width,
     });
     await instances.camera.start();
-    setState("camera", "active", true);
   }
+  setState("camera", "active", true);
 }
 
 export function updateCamera(
@@ -224,7 +223,7 @@ export function updateCamera(
 }
 
 export async function setupModel() {
-  instances.model = new window.Pose({
+  instances.model = new Pose({
     locateFile: (file) => {
       return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
     },

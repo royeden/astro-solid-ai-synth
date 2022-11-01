@@ -1,4 +1,6 @@
-import type { Results } from "@mediapipe/pose";
+// TODO rename file to tracking as it concerns the tracking aspects
+import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
+import { POSE_CONNECTIONS, Results } from "@mediapipe/pose";
 import { DOM_NODE_REFERENCES } from "~store/global";
 import { MidiMapper, setupMidiMessages } from "./midi";
 
@@ -139,16 +141,16 @@ function drawKeypoints(results: Results) {
   );
 
   DOM_NODE_REFERENCES.context!.globalCompositeOperation = "source-over";
-  window.drawConnectors(
+  drawConnectors(
     DOM_NODE_REFERENCES.context!,
     results.poseLandmarks,
-    window.POSE_CONNECTIONS,
+    POSE_CONNECTIONS,
     {
       color: "#FFF",
       lineWidth: 1,
     }
   );
-  window.drawLandmarks(DOM_NODE_REFERENCES.context!, results.poseLandmarks, {
+  drawLandmarks(DOM_NODE_REFERENCES.context!, results.poseLandmarks, {
     color: "#10b981",
     lineWidth: 1,
     radius: 1,
