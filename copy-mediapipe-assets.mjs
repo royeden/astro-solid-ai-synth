@@ -35,8 +35,9 @@ if (isCi) {
         const target = `public/scripts/${file.split("/").at(-1)}`;
         try {
           console.log(colors.yellow(`Fetching: ${file}...`));
+          const url = `https://cdn.jsdelivr.net/npm/@mediapipe/${file}`
           const response = (
-            await axios.get(`https://cdn.jsdelivr.net/npm/@mediapipe/${file}`, {
+            await axios.get(url, {
               responseType: "arraybuffer",
               headers: {
                 "Content-Type": "application/gzip",
@@ -44,7 +45,7 @@ if (isCi) {
             })
           ).data;
           await fs.promises.writeFile(target, Buffer.from(response));
-          console.log(colors.green(`Fetched to: ${target}!\n`));
+          console.log(colors.green(`Fetched to: ${url} !\n`));
         } catch (error) {
           console.error(
             colors.red(
@@ -63,7 +64,7 @@ if (isCi) {
     const target = `public/scripts/${file.split("/").at(-1)}`;
     console.log(colors.yellow(`Copying: ${src}...`));
     fs.promises.copyFile(src, target);
-    console.log(colors.green(`Copied to: ${target}!\n`));
+    console.log(colors.green(`Copied to: ${target} !\n`));
   });
 
   console.log(
