@@ -1,4 +1,4 @@
-import nodeFetch from "node-fetch";
+import axios from "axios";
 import fs from "fs";
 import colors from "@colors/colors";
 import isCi from "is-ci";
@@ -28,19 +28,23 @@ if (isCi) {
       FILES_TO_COPY.map(async (file) => {
         const target = `public/scripts/${file.split("/").at(-1)}`;
         try {
-          const response = await nodeFetch(
-            `https://cdn.jsdelivr.net/npm/@mediapie/${file}`
-          );
-          console.log(colors.yellow(`Copying: ${file}...`));
-          const content = await response.arrayBuffer();
-          await fs.promises.writeFile(target, Buffer.from(content));
-          console.log(colors.green(`Copied to: ${target}!\n`));
+          console.log(colors.yellow(`Fetching: ${file}...`));
+          const response = (
+            await axios.get(`https://cdn.jsdelivr.net/npm/@mediapipe/${file}`, {
+              headers: {
+                "Content-Encoding": "gzip",
+              },
+            })
+          ).data;
+          await fs.promises.writeFile(target, response);
+          console.log(colors.green(`Fetched to: ${target}!\n`));
         } catch (error) {
           console.error(
             colors.red(
-              `Error copying file to: ${target}!\n${error?.message ?? ""}`
+              `Error fetching file to: ${target}!\n${error?.message ?? ""}`
             )
           );
+          console.error(error.response);
         }
       })
     );
