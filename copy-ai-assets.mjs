@@ -9,12 +9,14 @@ https://github.com/google/mediapipe/issues/1812
 `)
 );
 
+const basePath = "/node_modules/@mediapipe/pose";
+
 const entries = await fg([
-  "node_modules/@mediapipe/pose/*.js",
-  "node_modules/@mediapipe/pose/*.tflite",
-  "node_modules/@mediapipe/pose/*.wasm",
-  "node_modules/@mediapipe/pose/*.binarypb",
-  "node_modules/@mediapipe/pose/*.data",
+  `${basePath}/*.js`,
+  `${basePath}/*.tflite`,
+  `${basePath}/*.wasm`,
+  `${basePath}/*.binarypb`,
+  `${basePath}/*.data`,
 ]);
 
 entries.forEach((entry) => {
