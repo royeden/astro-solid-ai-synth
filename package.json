@@ -9,11 +9,11 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "npm run copy-assets && npm run astro build",
+    "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
     "format": "prettier --write src",
-    "copy-assets": "node copy-ai-assets.mjs",
+    "copy-assets": "node copy-mediapipe-assets.mjs",
     "postinstall": "npm run copy-assets"
   },
   "devDependencies": {
@@ -24,7 +24,8 @@
     "@mediapipe/drawing_utils": "^0.3.1620248257",
     "@mediapipe/pose": "^0.5.1635988162",
     "astro": "^1.6.2",
-    "fast-glob": "^3.2.12",
+    "is-ci": "^3.0.1",
+    "node-fetch": "^3.2.10",
     "prettier": "^2.7.1",
     "prettier-plugin-astro": "^0.7.0",
     "prettier-plugin-tailwindcss": "^0.1.13",
