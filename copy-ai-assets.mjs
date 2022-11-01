@@ -10,8 +10,12 @@ https://github.com/google/mediapipe/issues/1812
 `)
 );
 
-const DRAWING_UTILS_ASSETS_PATH = "node_modules/@mediapipe/drawing_utils";
-const AI_ASSETS_PATH = "node_modules/@mediapipe/pose";
+const BASE_PATH = path.join(
+  import.meta.url.replace("file://", "").split("/").slice(0, -1).join("/"),
+  "node_modules/@mediapipe"
+);
+const DRAWING_UTILS_ASSETS_PATH = `${BASE_PATH}/drawing_utils`;
+const AI_ASSETS_PATH = `${BASE_PATH}/pose`;
 
 const entries = await fg([
   `${DRAWING_UTILS_ASSETS_PATH}/*.js`,
