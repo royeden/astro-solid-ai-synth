@@ -25,11 +25,12 @@ View the following issue to know why this is a relevant step:
 https://github.com/google/mediapipe/issues/1812`)
 );
 
+if (!fs.existsSync("public/scripts")) {
+  fs.mkdirSync("public/scripts");
+}
+
 if (isCi) {
   async function fetchFiles() {
-    if (!fs.existsSync("public/scripts")) {
-      fs.mkdirSync("public/scripts");
-    }
     await Promise.all(
       FILES_TO_COPY.map(async (file) => {
         const target = `public/scripts/${file.split("/").at(-1)}`;
