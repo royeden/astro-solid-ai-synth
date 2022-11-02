@@ -1,7 +1,7 @@
 // TODO rename file to tracking as it concerns the tracking aspects
 import type { Results } from "@mediapipe/pose";
 import { DOM_NODE_REFERENCES } from "~store/global";
-import { MidiMapper, setupMidiMessages } from "./midi";
+import { MidiMapper, midiState } from "./midi";
 
 export const POSE_LANDMARKS_ORDER = [
   "NOSE",
@@ -40,6 +40,14 @@ export const POSE_LANDMARKS_ORDER = [
 ] as const;
 
 export type PoseLandmark = typeof POSE_LANDMARKS_ORDER[number];
+
+export const POSE_LANDMARKS_REVERSE_MAPPER = POSE_LANDMARKS_ORDER.reduce(
+  (mapper, landmark, index) => {
+    mapper[landmark as PoseLandmark] = index;
+    return mapper;
+  },
+  {} as { [Landmark in PoseLandmark]: number }
+);
 
 export const POSE_LANDMARKS_LABELS: {
   [Landmark in PoseLandmark]: string;
@@ -159,5 +167,5 @@ function drawKeypoints(results: Results) {
 
 export function onResults(results: Results) {
   drawKeypoints(results);
-  setupMidiMessages(results);
+  midiState.poseLandmarks = results.poseLandmarks;
 }

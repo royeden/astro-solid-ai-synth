@@ -2,7 +2,7 @@ import type { Pose, Options } from "@mediapipe/pose";
 import { createStore } from "solid-js/store";
 import { Input, Output, WebMidi } from "webmidi";
 import { debounce } from "~utils/debounce";
-import { sendMidiMessages, stopMidiMessages } from "~utils/midi";
+import { sendMidiNotes, stopMidiNotes } from "~utils/midi";
 import {
   onResults,
   PoseLandmark,
@@ -46,6 +46,9 @@ export interface GlobalStore {
     output: MidiDeviceConfig<Output>;
     tracking: TrackingConfig; // TODO Rethink tracking, maybe add an array of configs instead of a single one to allow for multiple expressions of a single body part
   };
+  triggers: {
+    [channel: number]: PoseLandmark[];
+  };
   model: {
     // colors: {};
     loading: boolean;
@@ -68,6 +71,7 @@ export interface StoredConfig {
 export const instances: Instances = {};
 export const DOM_NODE_REFERENCES: DomRefs = {};
 
+// TODO DON'T SERIALIZE GETTERS
 export const [state, setState] = createStore<GlobalStore>({
   camera: {
     active: false,
@@ -95,6 +99,19 @@ export const [state, setState] = createStore<GlobalStore>({
       );
       return tracking;
     }, {} as TrackingConfig),
+  },
+  get triggers() {
+    const tracking = this.midi.tracking;
+    return POSE_LANDMARKS_ORDER.reduce((triggers, landmark) => {
+      const triggerChannel =
+        tracking[landmark as PoseLandmark].triggerChannel;
+
+      if (triggerChannel !== null) {
+        const channel = (triggers[triggerChannel] ??= []);
+        channel.push(landmark);
+      }
+      return triggers;
+    }, {} as GlobalStore["triggers"]);
   },
   model: {
     loading: true,
@@ -294,10 +311,10 @@ export async function setupMidi() {
 }
 
 export function updateMidiInput(input: Input) {
-  state.midi.input.selected?.removeListener("noteon", sendMidiMessages);
-  state.midi.input.selected?.removeListener("noteoff", stopMidiMessages);
-  input.addListener("noteon", sendMidiMessages);
-  input.addListener("noteoff", stopMidiMessages);
+  state.midi.input.selected?.removeListener("noteon", sendMidiNotes);
+  state.midi.input.selected?.removeListener("noteoff", stopMidiNotes);
+  input.addListener("noteon", sendMidiNotes);
+  input.addListener("noteoff", stopMidiNotes);
   setState("midi", "input", "selected", input);
 }
 
