@@ -2,7 +2,7 @@ import type { Results } from "@mediapipe/pose";
 import type { MessageEvent } from "webmidi";
 import { state } from "~store/global";
 import { floor, map, round } from "~utils/math";
-import { PoseLandmark, POSE_LANDMARKS_ORDER } from "./model";
+import { PoseLandmark, POSE_LANDMARKS_REVERSE_MAPPER } from "./model";
 
 export const MIDI_CHANNELS = Array.from({ length: 16 }, (_, i) => i + 1);
 export const ALL_MIDI_CHANNELS = [0, ...MIDI_CHANNELS];
@@ -141,100 +141,8 @@ export const MIDI_MAPPERS = {
 
 export type MidiMapper = keyof typeof MIDI_MAPPERS;
 
-export interface StoredState {
-  notes: Array<undefined | number[]>;
-  results: Array<[number, number] | [number] | []>;
-  triggers: boolean[];
-}
-
-const storedState: StoredState = {
-  notes: ALL_MIDI_CHANNELS.map(() => undefined),
-  results: POSE_LANDMARKS_ORDER.map(() => []),
-  triggers: MIDI_CHANNELS.map(() => false),
-};
-
-// TODO consider not using sets so we already have arrays
-function getChannelNotesByTrigger(trigger: number) {
-  return POSE_LANDMARKS_ORDER.reduce((notesByChannel, landmark, index) => {
-    const landmarkConfig = state.midi.tracking[landmark];
-    if (
-      storedState.results[index] &&
-      landmarkConfig.outputChannel !== undefined &&
-      landmarkConfig.triggerChannel === trigger
-    ) {
-      const notes = storedState.results[index]!;
-      const channel = landmarkConfig.outputChannel!.toString();
-      if (notesByChannel[channel]) {
-        if (notes[0]) notesByChannel[channel]!.add(notes[0]);
-        if (notes[1]) notesByChannel[channel]!.add(notes[1]);
-      } else {
-        notesByChannel[channel] = new Set(notes);
-      }
-    }
-    return notesByChannel;
-  }, {} as { [key: string]: Set<number> });
-}
-
-export function sendMidiMessages(event: MessageEvent) {
-  if (state.midi.output.selected) {
-    const notesToPlay = getChannelNotesByTrigger(event.message.channel);
-    const channelsToPlay = Object.keys(notesToPlay);
-
-    channelsToPlay.forEach((channelKey) => {
-      const channel = parseInt(channelKey, 10);
-      const notes = Array.from(notesToPlay[channel]!);
-
-      storedState.notes[channel] = notes;
-
-      state.midi.output.selected!.playNote(
-        notes,
-        channel ? { channels: channel } : {}
-      );
-    });
-
-    if (channelsToPlay.length) {
-      storedState.triggers[event.message.channel] = true;
-    }
-  }
-}
-
-// TODO revise this
-export function stopMidiMessages(event: MessageEvent) {
-  if (
-    state.midi.output.selected &&
-    storedState.triggers[event.message.channel]
-  ) {
-    const updatedNotes = getChannelNotesByTrigger(event.message.channel);
-
-    storedState.notes.forEach((notes, channel) => {
-      if (notes) {
-        const notesStatus = notes.reduce(
-          (status, note) => {
-            if (updatedNotes[channel]?.has(note)) {
-              status.on.push(note);
-            } else {
-              status.off.push(note);
-            }
-            return status;
-          },
-          { off: [] as number[], on: [] as number[] }
-        );
-
-        storedState.notes[channel] = notesStatus.on;
-
-        state.midi.output.selected!.sendNoteOff(
-          notesStatus.off,
-          channel ? { channels: channel } : undefined
-        );
-      }
-    });
-    storedState.triggers[event.message.channel] = false;
-  }
-}
-
 // function quantize(inputNote: number, scale: number[], roundUp = false) {
 //   const noteInScale = inputNote % 12;
-
 //   return scale.includes(noteInScale)
 //     ? inputNote
 //     : octave(inputNote) * 12 +
@@ -248,29 +156,119 @@ export function stopMidiMessages(event: MessageEvent) {
 //         );
 // }
 
-// TODO consider creating the values before sending them instead of frame by frame
-export function setupMidiMessages(results: Results) {
-  if (results.poseLandmarks?.length) {
-    results.poseLandmarks.forEach((landmark, index) => {
-      const landmarkConfig =
-        state.midi.tracking[POSE_LANDMARKS_ORDER[index] as PoseLandmark]!;
-      if (
-        landmarkConfig.triggerChannel !== null &&
-        landmarkConfig.outputChannel !== null &&
-        landmarkConfig.outputMapper &&
-        (landmark.visibility ?? 0) >
-          (state.model.options.minTrackingConfidence ?? 0.5)
-      ) {
-        const value = MIDI_MAPPERS[landmarkConfig.outputMapper].mapper(
-          landmark,
-          landmarkConfig.outputMin,
-          landmarkConfig.outputMax
-        );
+type Note = number;
+type Trigger = number;
 
-        storedState.results[index] = (
-          Array.isArray(value) ? value : [value]
-        ) as StoredState["results"][number];
-      }
-    });
+// Think about playing notes as playing a keyboard:
+// You can have many fingers on a single key, so it won't stop until you've removed all of them.
+
+// Notes are sent on different channels, so there should be a relationship between trigger -> channels -> notes
+// Therefore, on note on messages (triggers), notes are tied to a channel thats itself tied to a trigger:
+interface Triggers {
+  [trigger: number | string]: {
+    [channel: number | string]: Set<Note>;
+  };
+}
+
+// Notes can be triggered by different triggers / fingers and are tied to an output channel
+// So there should be another relationship channel -> notes -> triggers
+// Therefore, on note off messages (triggers), we should try to turn off the notes sounding on those channels:
+interface Channels {
+  [channel: number | string]: {
+    [note: number | string]: Set<Trigger>;
+  };
+}
+
+interface MidiState {
+  channels: Channels;
+  poseLandmarks: Results["poseLandmarks"];
+  triggers: Triggers;
+}
+export const midiState: MidiState = {
+  channels: {},
+  poseLandmarks: [],
+  triggers: {},
+};
+
+export function sendMidiNotes(event: MessageEvent) {
+  const output = state.midi.output.selected;
+  if (output) {
+    const triggerChannel = event.message.channel;
+    // We get the triggers from the store
+    const triggers = state.triggers[triggerChannel];
+    if (triggers) {
+      triggers.forEach((landmark) => {
+        const {
+          triggerChannel,
+          outputChannel,
+          outputMapper,
+          outputMax,
+          outputMin,
+        } = state.midi.tracking[landmark as PoseLandmark];
+
+        // We get the poses from the landmark
+        const pose =
+          midiState.poseLandmarks?.[
+            POSE_LANDMARKS_REVERSE_MAPPER[landmark as PoseLandmark]
+          ];
+
+        if (
+          pose &&
+          (pose.visibility ?? 0) > 0.5 &&
+          outputChannel !== null &&
+          outputMapper &&
+          triggerChannel !== null
+        ) {
+          // Build the notes
+          const mapped = MIDI_MAPPERS[outputMapper].mapper(
+            pose,
+            outputMin,
+            outputMax
+          );
+          // For easier handling, every note should go into an array
+          const notes = Array.isArray(mapped) ? mapped : [mapped];
+
+          const trigger = (midiState.triggers[triggerChannel] ??= {}); // We add a channels object to the trigger channel if it's undefined
+          const notesForChannel = (trigger[outputChannel] ??= new Set<Note>()); // We add a new set of notes to the output channel if it's undefined
+
+          notes.forEach((note) => {
+            const channel = (midiState.channels[outputChannel] ??= {});
+            const triggersForNote = (channel[note] ??= new Set<Trigger>());
+            triggersForNote.add(triggerChannel);
+
+            notesForChannel.add(note);
+
+            output.sendNoteOn(note, { channels: outputChannel });
+          });
+        }
+      });
+    }
+  }
+}
+
+export function stopMidiNotes(event: MessageEvent) {
+  const output = state.midi.output.selected;
+  if (output) {
+    const triggerChannel = event.message.channel;
+    const channelsForTrigger = midiState.triggers[triggerChannel];
+    if (channelsForTrigger) {
+      Object.keys(channelsForTrigger).forEach((channel) => {
+        const notesForChannel = channelsForTrigger[channel];
+        const triggersForNote = midiState.channels[channel];
+        if (notesForChannel?.size) {
+          notesForChannel.forEach((note) => {
+            triggersForNote?.[note]?.delete(triggerChannel);
+            if (!triggersForNote?.size) {
+              delete triggersForNote?.[note];
+              output.sendNoteOff(note, { channels: parseInt(channel, 10) });
+            }
+          });
+        }
+        if (triggersForNote && !Object.keys(triggersForNote).length) {
+          delete midiState.channels[channel];
+        }
+      });
+    }
+    delete midiState.triggers[triggerChannel];
   }
 }
