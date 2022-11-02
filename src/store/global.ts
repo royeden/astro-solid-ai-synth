@@ -316,6 +316,12 @@ export function updateMidiInput(input: Input) {
   input.addListener("noteon", sendMidiNotes);
   input.addListener("noteoff", stopMidiNotes);
   setState("midi", "input", "selected", input);
+  state.midi.output.selected?.sendAllNotesOff();
+}
+
+export function updateMidiOutput(output: Output) {
+  state.midi.output.selected?.sendAllNotesOff();
+  setState("midi", "output", "selected", output);
 }
 
 export function updateMidiTracking(

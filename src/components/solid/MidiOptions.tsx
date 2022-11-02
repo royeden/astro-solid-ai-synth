@@ -1,6 +1,11 @@
 import { For } from "solid-js";
 import { Input, Output, WebMidi } from "webmidi";
-import { setState, setupMidi, state, updateMidiInput } from "~store/global";
+import {
+  setupMidi,
+  state,
+  updateMidiInput,
+  updateMidiOutput,
+} from "~store/global";
 import { Button, Select } from "./UI";
 
 function toMidiDeviceOption(device: Input | Output, index: number) {
@@ -32,12 +37,7 @@ export function MidiOptions() {
               label: "MIDI Output:",
               name: "midi-output-device",
               onChange(value: string) {
-                setState(
-                  "midi",
-                  "output",
-                  "selected",
-                  WebMidi.getOutputById(value)
-                );
+                updateMidiOutput(WebMidi.getOutputById(value));
               },
               options: state.midi.output.available.map((device, index) =>
                 toMidiDeviceOption(device, index)
