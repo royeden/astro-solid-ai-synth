@@ -1,5 +1,5 @@
 import type { Results } from "@mediapipe/pose";
-import type { MessageEvent } from "webmidi";
+import type { NoteMessageEvent } from "webmidi";
 import { state } from "~store/global";
 import { floor, map, round } from "~utils/math";
 import { PoseLandmark, POSE_LANDMARKS_REVERSE_MAPPER } from "./model";
@@ -190,7 +190,8 @@ export const midiState: MidiState = {
   triggers: {},
 };
 
-export function sendMidiNotes(event: MessageEvent) {
+// TODO Config triggers via specific notes in a channel for single channel controllers
+export function sendMidiNotes(event: NoteMessageEvent) {
   const output = state.midi.output.selected;
   if (output) {
     const triggerChannel = event.message.channel;
@@ -238,7 +239,10 @@ export function sendMidiNotes(event: MessageEvent) {
 
             notesForChannel.add(note);
 
-            output.sendNoteOn(note, { channels: outputChannel });
+            output.sendNoteOn(note, {
+              channels: outputChannel,
+              rawAttack: event.note.rawAttack,
+            });
           });
         }
       });
@@ -246,7 +250,7 @@ export function sendMidiNotes(event: MessageEvent) {
   }
 }
 
-export function stopMidiNotes(event: MessageEvent) {
+export function stopMidiNotes(event: NoteMessageEvent) {
   const output = state.midi.output.selected;
   if (output) {
     const triggerChannel = event.message.channel;
@@ -260,7 +264,10 @@ export function stopMidiNotes(event: MessageEvent) {
             triggersForNote?.[note]?.delete(triggerChannel);
             if (!triggersForNote?.size) {
               delete triggersForNote?.[note];
-              output.sendNoteOff(note, { channels: parseInt(channel, 10) });
+              output.sendNoteOff(note, {
+                channels: parseInt(channel, 10),
+                rawRelease: event.note.rawRelease,
+              });
             }
           });
         }
