@@ -193,7 +193,7 @@ export const midiState: MidiState = {
 // TODO Config triggers via specific notes in a channel for single channel controllers
 export function sendMidiNotes(event: NoteMessageEvent) {
   const output = state.midi.output.selected;
-  if (output) {
+  if (state.camera.active && output) {
     const triggerChannel = event.message.channel;
     // We get the triggers from the store
     const triggers = state.triggers[triggerChannel];
