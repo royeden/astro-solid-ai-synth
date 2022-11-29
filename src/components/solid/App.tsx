@@ -29,13 +29,22 @@ function CameraView() {
       <video class="hidden" ref={DOM_NODE_REFERENCES.video!} />
       <div>
         <div class="relative">
-          <canvas
-            class="h-full w-full"
-            style={{
-              transform: "rotateY(180deg)",
-            }}
-            ref={DOM_NODE_REFERENCES.canvas!}
-          />
+          <div class="h-full w-full" onDblClick={(event) => {
+            const element = event.currentTarget;
+              if (document.fullscreenEnabled && document.fullscreenElement === element) {
+                document.exitFullscreen();
+              } else {
+                event.currentTarget.requestFullscreen();
+              }
+            }}>
+            <canvas
+              class="h-full w-full"
+              style={{
+                transform: "rotateY(180deg)",
+              }}
+              ref={DOM_NODE_REFERENCES.canvas!}
+            />
+          </div>
           <Show when={!state.camera.active || state.model.loading}>
             <div
               class="absolute inset-0 flex items-center justify-center bg-gray-900 text-white dark:bg-black"
