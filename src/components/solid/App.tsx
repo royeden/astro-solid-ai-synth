@@ -29,16 +29,22 @@ function CameraView() {
       <video class="hidden" ref={DOM_NODE_REFERENCES.video!} />
       <div>
         <div class="relative">
-          <div class="h-full w-full" onDblClick={(event) => {
-            const element = event.currentTarget;
-              if (document.fullscreenEnabled && document.fullscreenElement === element) {
+          <div
+            class="flex h-full w-full items-center justify-center"
+            onDblClick={(event) => {
+              const element = event.currentTarget;
+              if (
+                document.fullscreenEnabled &&
+                document.fullscreenElement === element
+              ) {
                 document.exitFullscreen();
               } else {
                 event.currentTarget.requestFullscreen();
               }
-            }}>
+            }}
+          >
             <canvas
-              class="h-full w-full"
+              class="aspect-video h-full w-full"
               style={{
                 transform: "rotateY(180deg)",
               }}
